@@ -1,0 +1,413 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IBM Fall ELL — Full Code Audit</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:13px;line-height:1.6;background:#fff;color:#1f2328;padding:28px 16px 48px}
+.wrapper{max-width:900px;margin:0 auto}
+h1{font-size:19px;font-weight:700;margin-bottom:3px}
+.sub{color:#57606a;font-size:12px;margin-bottom:22px}
+h2{font-size:14px;font-weight:700;margin:26px 0 8px;border-bottom:1px solid #e5e7eb;padding-bottom:5px}
+table{width:100%;border-collapse:collapse;margin-bottom:22px;font-size:12px}
+th{background:#f7f8fa;border:1px solid #e5e7eb;padding:7px 9px;text-align:left;font-weight:600;white-space:nowrap}
+td{border:1px solid #e5e7eb;padding:6px 9px;vertical-align:top}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.done{background:#dcfce7;color:#166534}
+.partial{background:#fef9c3;color:#854d0e}
+.gap{background:#fee2e2;color:#991b1b}
+.warn{background:#fef3c7;color:#92400e}
+.bug{background:#fce7f3;color:#9d174d}
+ol{padding-left:18px}
+li{margin-bottom:3px}
+code{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:3px;padding:0 4px;font-size:11px;font-family:Consolas,"Courier New",monospace}
+.step-box{background:#f7f8fa;border:1px solid #e5e7eb;border-radius:5px;padding:10px 13px;margin:6px 0 10px}
+.step-box p{margin-bottom:5px;font-size:12px}
+.step-num{font-weight:700;color:#3b82d4;margin-right:4px}
+.deadline{font-weight:700;color:#991b1b}
+footer{margin-top:36px;padding-top:12px;border-top:1px solid #e5e7eb;text-align:center;font-size:11px;color:#57606a}
+.sep{color:#57606a;margin:0 4px}
+.grp{font-size:11px;color:#57606a;font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1>IBM SkillsBuild AI ELL — Full Code Audit &amp; Steps to Complete</h1>
+<p class="sub">US 2026 Fall Cohort · Verified 2026-11-17 · Tests run live · <span class="deadline">Submit by Nov 20 (hard cutoff Nov 22)</span></p>
+
+
+<h2>Master Status — All 6 Bob Tasks</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>Task</th><th>Owner</th><th>Status</th><th>Verified evidence</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>01</td><td>Python repository (<code>depot_ev/</code>)</td><td>Engine lead</td>
+      <td><span class="badge done">DONE ✓</span></td>
+      <td>All 5 files present; 16/16 pytest pass in 1.57 s; <code>run_night</code> matches targets (~$2 k / $4.2 k)</td>
+    </tr>
+    <tr>
+      <td>02</td><td>Automated tests (16 tests, 9 rules)</td><td>Engine lead</td>
+      <td><span class="badge done">DONE ✓</span></td>
+      <td><code>pytest tests/test_depot_ev.py</code> → <strong>16 passed, 0 failed</strong> (live run confirmed above)</td>
+    </tr>
+    <tr>
+      <td>03</td><td>watsonx Orchestrate agent YAML</td><td>AI &amp; Platform lead</td>
+      <td><span class="badge partial">PARTIAL — 3 fixes needed</span></td>
+      <td>Files exist; 2 of 4 agent YAMLs have invalid <code>style: default</code> field; OpenAPI <code>servers.url</code> is still a placeholder; agent not yet imported into Orchestrate</td>
+    </tr>
+    <tr>
+      <td>04</td><td>Security scan &amp; sign-in</td><td>Engine lead</td>
+      <td><span class="badge gap">NOT STARTED</span></td>
+      <td>No Semgrep run; <code>DEPOT_TOKEN</code> not set → server runs fully open; API keys not checked for log leakage</td>
+    </tr>
+    <tr>
+      <td>05</td><td>Deploy to IBM Cloud Code Engine</td><td>AI &amp; Platform lead</td>
+      <td><span class="badge gap">NOT STARTED</span></td>
+      <td>No <code>Dockerfile</code> in repo; no IBM Cloud deployment; no HTTPS URL</td>
+    </tr>
+    <tr>
+      <td>06</td><td>README &amp; API docs</td><td>Product &amp; Delivery lead</td>
+      <td><span class="badge gap">NOT STARTED</span></td>
+      <td>No root-level <code>README.md</code> exists; credit log all TBD</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<h2>Task 03 — 3 things to fix before importing into Orchestrate</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>File</th><th>Problem found</th><th>Status</th><th>Steps to fix</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>03-A</td>
+      <td><code>agents/energy_command.yaml</code><br /><code>agents/fleet_command.yaml</code></td>
+      <td>Both have <code>style: default</code> — this field does not exist in the ADK <code>v1</code> native agent spec and will cause an import error</td>
+      <td><span class="badge bug">IMPORT BLOCKER</span></td>
+      <td>
+        <ol>
+          <li>Open <code>energy_command.yaml</code> and delete the line <code>style: default</code></li>
+          <li>Open <code>fleet_command.yaml</code> and delete the same line</li>
+          <li><code>depot_ops_agent.yaml</code> and <code>business_command.yaml</code> are already clean — no change needed</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>03-B</td>
+      <td><code>tools/depot-api.openapi.yaml</code> line 10</td>
+      <td><code>url: https://YOUR-DEPLOYED-DEPOT-EV-URL</code> is still a placeholder — Orchestrate will reject the import</td>
+      <td><span class="badge bug">IMPORT BLOCKER</span></td>
+      <td>
+        <ol>
+          <li>Start an ngrok tunnel: <code>ngrok http 8000</code></li>
+          <li>Copy the printed HTTPS URL (e.g. <code>https://abc123.ngrok-free.app</code>)</li>
+          <li>Replace line 10 in the OpenAPI spec with that URL</li>
+          <li>Verify: <code>curl https://abc123.ngrok-free.app/api/sessions</code> → HTTP 200</li>
+          <li>After Task 05, replace again with the Code Engine URL and re-import tools</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>03-C</td>
+      <td>Orchestrate cloud (not a local file)</td>
+      <td>Tools and agent have never been imported — the agent does not exist in Orchestrate yet</td>
+      <td><span class="badge gap">NOT DONE</span></td>
+      <td>
+        <ol>
+          <li><code>pip install ibm-watson-orchestrate-adk</code></li>
+          <li><code>orchestrate login</code> (IBM Cloud API key + region)</li>
+          <li><code>orchestrate tools import -k openapi -f tools/depot-api.openapi.yaml</code> <em>(tools first)</em></li>
+          <li><code>orchestrate agents import -f agents/depot_ops_agent.yaml</code></li>
+          <li>Optionally also import the 3 command agents: <code>energy_command.yaml</code>, <code>fleet_command.yaml</code>, <code>business_command.yaml</code></li>
+          <li>Run the 5 test questions from <code>agents/orchestrate-setup.sh</code> in the Orchestrate chat UI</li>
+          <li>Save one completed depot session in the web app first so the agent has real data</li>
+        </ol>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<h2>Task 04 — Security scan &amp; sign-in (Engine lead)</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>Requirement from spec</th><th>Current state</th><th>Steps to complete</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>04-A</td>
+      <td>Run Semgrep on <code>server.py</code>, <code>common.js</code>, <code>depot-engine.js</code>, HTML pages</td>
+      <td><span class="badge gap">Not run</span></td>
+      <td>
+        <ol>
+          <li><code>pip install semgrep</code></li>
+          <li><code>semgrep --config auto server.py common.js depot-engine.js index.html dispatch.html customers.html history.html</code></li>
+          <li>Fix findings or document each as accepted with a reason in a <code>semgrep-findings.md</code></li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>04-B</td>
+      <td>Add sign-in so only the depot team can use the app &amp; API (<code>DEPOT_TOKEN</code>)</td>
+      <td><span class="badge gap">Token not set — server runs open</span></td>
+      <td>
+        <ol>
+          <li>Copy <code>.env.example</code> to <code>.env</code></li>
+          <li>Set <code>DEPOT_TOKEN=&lt;any strong random string&gt;</code> in <code>.env</code></li>
+          <li>Load it before starting: <code>Get-Content .env | ForEach-Object { if ($_ -notmatch '^#' -and $_ -match '=') { $k,$v = $_ -split '=',2; [System.Environment]::SetEnvironmentVariable($k,$v) } }</code></li>
+          <li>Restart <code>python server.py 8000</code> — all <code>/api/</code> calls now require <code>Authorization: Bearer &lt;token&gt;</code></li>
+          <li>Add the token to the OpenAPI spec security section so Orchestrate passes it</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>04-C</td>
+      <td>Verify API keys are never returned to browser or written to logs</td>
+      <td><span class="badge warn">Not verified</span></td>
+      <td>
+        <ol>
+          <li>Grep the codebase: <code>grep -n "WATSONX_API_KEY\|SF511\|NREL\|OPENEI" server.py</code> — confirm no key values appear in any <code>reply()</code> call or <code>print()</code></li>
+          <li>The <code>/api/config</code> endpoint already returns only <code>{"granite": true/false}</code> — confirm it never echoes the key itself</li>
+          <li>Add <code>.env</code> to <code>.gitignore</code> (verify it is already listed)</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>04-D</td>
+      <td>Escape all user-visible text</td>
+      <td><span class="badge warn">Not verified</span></td>
+      <td>
+        <ol>
+          <li>Search HTML files for any <code>innerHTML</code> usage that sets user-supplied data: <code>grep -n "innerHTML" *.html *.js</code></li>
+          <li>Replace any raw <code>innerHTML = userValue</code> with <code>textContent</code> or a safe escaping function</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>04-E</td>
+      <td>Validate all <code>/api</code> inputs (types, limits)</td>
+      <td><span class="badge done">Already done in server.py</span></td>
+      <td>All query params clamped with <code>max()/min()/float()/int()</code>; body fields use <code>_clamp()</code>; <code>_SESSION_KINDS</code>, <code>_NOTIF_KINDS</code> allowlists in place. No action needed — just confirm in Semgrep output.</td>
+    </tr>
+    <tr>
+      <td>04-F</td>
+      <td>Export session report</td>
+      <td><span class="badge gap">Not done</span></td>
+      <td>After completing 04-A through 04-D, export the Bob session report to <code>bob_sessions/04-security/</code> and log credits in <code>docs/bob-tasks/credit-log.md</code></td>
+    </tr>
+  </tbody>
+</table>
+
+
+<h2>Task 05 — Deploy to IBM Cloud Code Engine (AI &amp; Platform lead)</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>Requirement from spec</th><th>Current state</th><th>Steps to complete</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>05-A</td>
+      <td>Write a <code>Dockerfile</code> for <code>server.py</code></td>
+      <td><span class="badge gap">File does not exist</span></td>
+      <td>
+        <ol>
+          <li>Create <code>Dockerfile</code> in the repo root — minimal example:<br />
+            <code>FROM python:3.12-slim</code><br />
+            <code>WORKDIR /app</code><br />
+            <code>COPY . .</code><br />
+            <code>EXPOSE 8080</code><br />
+            <code>CMD ["python","server.py","8080"]</code>
+          </li>
+          <li>Build locally to verify: <code>docker build -t depot-ev .</code></li>
+          <li>Test: <code>docker run -p 8080:8080 depot-ev</code> → <code>curl http://localhost:8080</code></li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>05-B</td>
+      <td>Persistent storage for <code>data.db</code></td>
+      <td><span class="badge gap">Not configured</span></td>
+      <td>
+        <ol>
+          <li>Create an IBM Cloud Object Storage (COS) bucket <strong>OR</strong> mount a Code Engine persistent volume</li>
+          <li>Set the <code>DB</code> path in <code>server.py</code> via an env var <code>DB_PATH</code> pointing to the mounted volume path</li>
+          <li>In Code Engine, add a volume mount so the container writes <code>data.db</code> to persistent storage</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>05-C</td>
+      <td>API keys as Code Engine secrets (not baked into image)</td>
+      <td><span class="badge gap">Not configured</span></td>
+      <td>
+        <ol>
+          <li>In IBM Cloud Console → Code Engine → Secrets, create a secret for each key:<br />
+            <code>DEPOT_TOKEN</code>, <code>WATSONX_API_KEY</code>, <code>WATSONX_PROJECT_ID</code>, <code>NREL_API_KEY</code>, <code>SF511_API_KEY</code>, <code>OPENEI_API_KEY</code></li>
+          <li>Reference them as environment variables in the Code Engine app definition — never in the Dockerfile</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>05-D</td>
+      <td>Deploy and get the HTTPS URL</td>
+      <td><span class="badge gap">Not deployed</span></td>
+      <td>
+        <ol>
+          <li>Push image to IBM Container Registry: <code>ibmcloud cr build -t &lt;region&gt;.icr.io/&lt;namespace&gt;/depot-ev:latest .</code></li>
+          <li>Create Code Engine application pointing at the image</li>
+          <li>Code Engine auto-assigns an HTTPS URL like <code>https://depot-ev-&lt;hash&gt;.us-south.codeengine.appdomain.cloud</code></li>
+          <li>Test: <code>curl https://&lt;code-engine-url&gt;/api/sessions</code> → HTTP 200</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>05-E</td>
+      <td>Update OpenAPI spec with the permanent Cloud URL</td>
+      <td><span class="badge gap">Still placeholder</span></td>
+      <td>
+        <ol>
+          <li>Replace the ngrok URL in <code>tools/depot-api.openapi.yaml</code> <code>servers[0].url</code> with the Code Engine HTTPS URL</li>
+          <li>Re-import the tools in Orchestrate: <code>orchestrate tools import -k openapi -f tools/depot-api.openapi.yaml</code></li>
+          <li>The agent YAML does not need re-importing (it references tool names, not URLs)</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>05-F</td>
+      <td>Export session report</td>
+      <td><span class="badge gap">Not done</span></td>
+      <td>Export Bob session to <code>bob_sessions/05-deploy/</code>; log credits in <code>docs/bob-tasks/credit-log.md</code></td>
+    </tr>
+  </tbody>
+</table>
+
+
+<h2>Task 06 — README &amp; API docs (Product &amp; Delivery lead)</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>Requirement from spec</th><th>Current state</th><th>Steps to complete</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>06-A</td>
+      <td>Root-level <code>README.md</code> covering: problem, solution, architecture, local run, Cloud deploy, env vars, Orchestrate, tests, IBM tools used</td>
+      <td><span class="badge gap">File does not exist</span></td>
+      <td>
+        <ol>
+          <li>Create <code>README.md</code> in the repo root with sections:<br />
+            <em>Problem · Solution · Architecture · Quick start (local) · IBM Cloud deploy · Environment variables · watsonx Orchestrate setup · Running tests · IBM tools used</em></li>
+          <li>IBM tools section must name: <strong>IBM Bob</strong> (used to build), <strong>watsonx Granite</strong> (morning briefs), <strong>watsonx Orchestrate</strong> (operations agent)</li>
+          <li>Reference <code>docs/Depot-EV-Solution.pdf</code> for the full write-up</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>06-B</td>
+      <td>API reference generated from <code>tools/depot-api.openapi.yaml</code></td>
+      <td><span class="badge gap">Not generated</span></td>
+      <td>
+        <ol>
+          <li>Option A — Redoc CLI (no account needed): <code>npx @redocly/cli build-docs tools/depot-api.openapi.yaml -o docs/api.html</code></li>
+          <li>Option B — Swagger UI: <code>npx swagger-ui-watcher tools/depot-api.openapi.yaml</code> then export</li>
+          <li>Link the output from <code>README.md</code></li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>06-C</td>
+      <td>Fill in credit log <code>docs/bob-tasks/credit-log.md</code></td>
+      <td><span class="badge gap">All "Credits used" = TBD</span></td>
+      <td>
+        <ol>
+          <li>Open the Bob session report at <code>bob_sessions/01-03-combined.md</code></li>
+          <li>Check the Bob session credit counter for each task and fill in the actual values</li>
+          <li>Fill in credits for Tasks 04–06 as each session completes</li>
+          <li>Confirm total stays ≤ 150 (15 credits are held as reserve)</li>
+        </ol>
+      </td>
+    </tr>
+    <tr>
+      <td>06-D</td>
+      <td>Fill in team member names in <code>docs/TEAM_PLAN.md</code></td>
+      <td><span class="badge warn">All 3 show [Name]</span></td>
+      <td>Replace each <code>[Name]</code> with the actual team member name</td>
+    </tr>
+    <tr>
+      <td>06-E</td>
+      <td>Export session report</td>
+      <td><span class="badge gap">Not done</span></td>
+      <td>Export to <code>bob_sessions/06-docs/</code>; log credits in <code>docs/bob-tasks/credit-log.md</code></td>
+    </tr>
+  </tbody>
+</table>
+
+
+<h2>Active Runtime Errors (server already running)</h2>
+<table>
+  <thead>
+    <tr><th>Error</th><th>Cause</th><th>Fix</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>GET /api/solar</code> → <span class="badge bug">502</span></td>
+      <td>NREL PVWatts is timing out — using the rate-limited <code>DEMO_KEY</code></td>
+      <td>Register at <a href="https://developer.nrel.gov/signup/">developer.nrel.gov/signup</a>, add <code>NREL_API_KEY=&lt;key&gt;</code> to <code>.env</code>, restart server</td>
+    </tr>
+    <tr>
+      <td><code>GET /api/weather</code> → <span class="badge bug">502 + SSL timeout</span></td>
+      <td>TLS handshake to <code>api.open-meteo.com</code> timed out — likely a corporate proxy or firewall</td>
+      <td>Add <code>SSL_CERT_FILE=&lt;path-to-CA-bundle&gt;</code> to <code>.env</code>; or allowlist <code>api.open-meteo.com:443</code> at the network level; restart server</td>
+    </tr>
+    <tr>
+      <td><code>GET /favicon.ico</code> → <span class="badge warn">404</span></td>
+      <td>No favicon file in repo root</td>
+      <td>Add any <code>favicon.ico</code> file to the repo root (can be a 1×1 pixel icon — minor cosmetic fix)</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<h2>Submission Checklist (Product &amp; Delivery lead)</h2>
+<table>
+  <thead>
+    <tr><th>Item</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Confirm cohort theme in lab portal (noted "to confirm" in TEAM_PLAN.md)</td><td><span class="badge warn">Unconfirmed</span></td></tr>
+    <tr><td>All team names filled in <code>docs/TEAM_PLAN.md</code></td><td><span class="badge gap">Still [Name]</span></td></tr>
+    <tr><td>Record 2–3 minute demo video</td><td><span class="badge gap">Not recorded</span></td></tr>
+    <tr><td>Update <code>docs/Depot-EV-Solution.pdf</code> to reflect Weeks 3–5 changes (Semis added, security, deploy)</td><td><span class="badge warn">Needs review</span></td></tr>
+    <tr><td>All 6 Bob session reports saved in <code>bob_sessions/</code></td><td><span class="badge partial">3 of 6 done</span></td></tr>
+    <tr><td>Credit log complete (all Credits used filled in)</td><td><span class="badge gap">All TBD</span></td></tr>
+    <tr><td>Submit by <span class="deadline">Nov 20</span></td><td><span class="deadline">3 days remaining</span></td></tr>
+  </tbody>
+</table>
+
+
+<h2>Recommended Execution Order (Nov 17–20)</h2>
+<table>
+  <thead>
+    <tr><th>Day</th><th>Action</th><th>Owner</th><th>Unlocks</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Nov 17 AM</td><td>Fix <code>style:</code> field in <code>energy_command.yaml</code> + <code>fleet_command.yaml</code> (5 min)</td><td>AI &amp; Platform</td><td>03-A ✓</td></tr>
+    <tr><td>Nov 17 AM</td><td>Bob Task 04 — Semgrep scan, set <code>DEPOT_TOKEN</code>, check innerHTML</td><td>Engine lead</td><td>04 ✓</td></tr>
+    <tr><td>Nov 17 PM</td><td>Bob Task 05 — Dockerfile, Code Engine deploy, get HTTPS URL</td><td>AI &amp; Platform</td><td>05 ✓</td></tr>
+    <tr><td>Nov 17 PM</td><td>Update OpenAPI spec with Cloud URL; import tools + agent into Orchestrate; run 5 test Q&amp;As</td><td>AI &amp; Platform</td><td>03-B, 03-C ✓</td></tr>
+    <tr><td>Nov 18 AM</td><td>Bob Task 06 — write <code>README.md</code>, generate API docs, fill team names, fill credit log</td><td>Product &amp; Delivery</td><td>06 ✓</td></tr>
+    <tr><td>Nov 18 PM</td><td>Fix NREL key + SSL cert issue; add favicon; update PDF if needed</td><td>Engine lead</td><td>Runtime bugs ✓</td></tr>
+    <tr><td>Nov 19</td><td>Record 2–3 min demo video; final review; confirm all 6 session reports saved</td><td>All</td><td>Submission ready</td></tr>
+    <tr><td><span class="deadline">Nov 20</span></td><td><strong>Submit</strong></td><td>Product &amp; Delivery</td><td>—</td></tr>
+  </tbody>
+</table>
+
+</div>
+<footer>Made with IBM Bob</footer>
+</body>
+</html>

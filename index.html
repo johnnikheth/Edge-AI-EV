@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EV Corporate Office Energy</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* price timeline */
+.timeline{position:relative;height:44px;border-radius:10px;overflow:hidden;display:flex}
+.timeline div{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden}
+.tl-labels{position:relative;height:18px;font-size:11px;color:var(--muted);margin-top:4px}
+.tl-labels span{position:absolute;transform:translateX(-50%)}
+#now{position:absolute;top:-6px;bottom:-6px;width:3px;background:var(--ink);border-radius:2px;box-shadow:0 0 0 2px var(--card)}
+/* main grid */
+.card{margin-bottom:0}
+#flow{width:100%;height:auto;display:block}
+#flow .node rect{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+#flow .node.dim{opacity:.4}
+#flow text{font-family:system-ui;fill:var(--ink)}
+#flow .sub{fill:var(--muted);font-size:13px}
+#flow .edge{fill:none;stroke:var(--line);stroke-width:3}
+#flow .edge.on{stroke-dasharray:10 8;animation:heroflow 1s linear infinite}
+#flow .lbl{font-size:13px;font-weight:700}
+.van{display:grid;grid-template-columns:76px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.van:last-child{border-bottom:none}
+.van .socbar{position:relative;height:12px;background:var(--line);border-radius:6px;overflow:hidden}
+.van .socbar i{position:absolute;left:0;top:0;bottom:0;background:var(--ok);border-radius:6px}
+.van .socbar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
+.van small{color:var(--muted)}
+#chart{height:320px} #bchart{height:170px} #tchart{height:220px}
+#alog,#log{height:380px;overflow:auto;font:12px/1.6 ui-monospace,Menlo,monospace;color:var(--muted)}
+#alog div b,#log div b{color:var(--ink)}
+.sz td{text-align:center;font-variant-numeric:tabular-nums} .sz td.best{outline:2px solid var(--ok);outline-offset:-2px;border-radius:6px}
+.sz small{color:var(--muted)}
+.controls input[type=number]{width:80px;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+/* front-page solar questionnaire */
+.solarq{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;margin-bottom:18px}
+.solarq h2{margin:0 0 2px}
+.solarq .yn{margin:0;min-width:300px}
+.solarq .yn button{padding:10px 14px;font-size:15px}
+.solarq label{display:flex;flex-direction:column;font-size:13px;color:var(--muted);gap:4px}
+.solarq select{font:inherit;min-width:130px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+/* setup wizard */
+dialog{border:1px solid var(--line);border-radius:16px;padding:0;max-width:560px;width:calc(100% - 32px);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.wiz{padding:24px}
+.wiz h2{font-size:20px;text-transform:none;letter-spacing:0;color:var(--ink);margin:0 0 6px}
+.wiz .stepn{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.yn button{padding:16px;font-size:16px;font-weight:600}
+.yn button.sel{background:var(--load);border-color:var(--load);color:#fff}
+.wiz .fields{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0}
+.wiz .fields label{display:flex;flex-direction:column;font-size:13px;color:var(--muted);gap:4px}
+.wiz .nav{display:flex;justify-content:space-between;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap wide">
+
+  <section class="herobox">
+    <div class="bg" id="heroBg"></div>
+    <div class="shade"></div>
+    <div class="content">
+      <div>
+        <h1 id="heroTitle">Tonight at the Corporate Office</h1>
+        <div id="status">Loading…</div>
+        <div class="actions">
+          <select id="arrPat" title="When the vans plug in (drivers can plug in at any time)"><option value="">Vans plug in: typical (13:00–14:30)</option><option value="morning">Vans plug in: morning (07:00–08:20)</option><option value="spread">Vans plug in: spread across the day</option><option value="evening">Vans plug in: evening peak (16:30–17:50)</option><option value="late">Vans plug in: late night (22:00–23:20)</option></select>
+          <select id="runMode" title="Run the night, or a full day to see solar producing"><option value="night">🌙 Night (13:00 → 06:00)</option><option value="day">☀ Full day (06:00 → 06:00)</option></select>
+          <button class="primary big" id="start">▶ Start the night</button>
+          <button id="reset">Reset</button>
+          <button id="outage">⚡ Simulate grid outage</button>
+          <select id="outPlan" title="Schedule an outage that starts and ends by itself"><option value="">No scheduled outage</option><option value="mid">Outage 11:00–14:00 (midday, solar up)</option><option value="peak">Outage 17:00–19:30 (evening peak)</option><option value="night">Outage 23:00–02:00 (overnight)</option></select>
+          <select id="speed" title="Simulation speed"><option value="2">Slow</option><option value="5" selected>Normal</option><option value="15">Fast</option></select>
+          <button id="openSetup">⚙ Site setup</button>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="glass">
+        <div class="kpi good"><b id="kSave">$0</b><span id="kSaveL">Saved tonight so far</span></div>
+        <div class="kpi"><b id="kPrice">—</b><span id="kPriceL">Price now</span></div>
+        <div class="kpi"><b id="kReady">0/5</b><span>Vans on track for their routes</span></div>
+        <div class="kpi"><b id="kSolar">—</b><span id="kSolarL">Rooftop solar now</span></div>
+        <div class="kpi"><b id="kClock">13:00</b><span id="kClockL">Simulated time</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="card solarq" id="solarq"></div>
+
+  <div class="card" style="margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <h2 style="margin:0" id="tlTitle">PG&amp;E business EV price through the night</h2><span class="note" id="nextTxt"></span>
+    </div>
+    <div style="position:relative"><div class="timeline" id="timeline"></div><div id="now"></div></div>
+    <div class="tl-labels" id="tlLabels"></div>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <h2>Where the power is going right now</h2>
+      <div class="scrollx"><svg id="flow" viewBox="0 0 760 400" role="img" aria-label="Live energy flow between rooftop solar, grid, EV storage, office load and chargers"></svg></div>
+    </div>
+    <div class="card">
+      <h2>Vans</h2>
+      <div id="vans"></div>
+      <p class="note" style="margin-top:8px">Bar = battery; black tick = what the route needs. Coloured chips = when the plan charges it (green super off-peak/solar, blue off-peak, red peak).</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tabs" role="tablist">
+      <button data-tab="savings" class="active">Savings</button>
+      <button data-tab="power">Power over time</button>
+      <button data-tab="building">Corporate Office &amp; HVAC</button>
+      <button data-tab="sizing">Size your system</button>
+      <button data-tab="stress">Stress test</button>
+      <button data-tab="life">Battery life</button>
+      <button data-tab="agents">Agents</button>
+      <button data-tab="activity">Activity</button>
+      <button data-tab="rates">Rates &amp; brief</button>
+    </div>
+
+    <div class="panel" id="tab-savings">
+      <div class="main" style="margin:0">
+        <div>
+          <div class="bigsave" id="bigSave">$0</div>
+          <p class="note" id="bigSaveL">saved tonight so far, compared with vans charging the moment they plug in.</p>
+          <div style="overflow-x:auto"><table id="costs"></table></div>
+        </div>
+        <div>
+          <h2>How the savings happen</h2>
+          <ul class="note" style="line-height:1.7;padding-left:18px;margin:0">
+            <li><b>Avoid the 4–9 pm peak.</b> Grid power costs $0.357/kWh then — more than twice off-peak. Vans are planned into cheaper hours.</li>
+            <li><b>Rooftop solar first.</b> Free solar from the corporate roof charges vans and fills EV storage; once storage is full, the surplus is pushed to the Corporate Office.</li>
+            <li><b>EV storage at peak.</b> If the site has storage, it powers the chargers (then the Corporate Office) through the peak. No storage → charging simply waits for off-peak.</li>
+            <li><b>Spread the load.</b> Keeps the site under its limit (no breaker trips) and the BEV subscription small.</li>
+          </ul>
+          <p class="note">Without the system: vans charge at full power on arrival, no solar or storage, standard thermostat. Only costs that differ are compared. Monthly = 30 nights like this + subscription. Exported solar is not credited.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab-power" hidden>
+      <canvas id="chart"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--bldg)"></i>Office load (HVAC + base)</span><span><i style="background:var(--load)"></i>Chargers</span>
+        <span><i style="background:#a142f4"></i>Filling EV storage</span><span><i style="background:var(--hero-sun)"></i>Rooftop solar</span>
+        <span><i style="background:var(--ink)"></i>Bought from grid</span><span><i style="background:none;border:1px dashed var(--muted)"></i>Bought from grid without system</span>
+        <span><i style="background:var(--limit)"></i>Site limit</span><span><i style="background:rgba(217,45,32,.18)"></i>Peak price</span><span><i style="background:rgba(18,161,80,.18)"></i>Super off-peak</span>
+      </div>
+      <h2 style="margin-top:18px">EV storage charge level</h2>
+      <canvas id="bchart"></canvas><div class="note" id="bNote"></div>
+    </div>
+
+    <div class="panel" id="tab-building" hidden>
+      <div class="controls">
+        <label>HVAC control
+          <select id="mode">
+            <option value="agent" selected>Power agent (smart HVAC)</option>
+            <option value="standard">Standard thermostat only</option>
+            <option value="force">Force HVAC on (demand spike)</option>
+          </select>
+        </label>
+        <label>Thermostat trigger °C<input type="number" id="trig" value="20" step="0.5"></label>
+        <label>Comfortable at °C<input type="number" id="comfort" value="21" step="0.5"></label>
+        <label>Re-trigger band %<input type="number" id="band" value="5" step="1" min="1" max="20"></label>
+        <button id="snap">Cold snap (−10 °C outside)</button>
+      </div>
+      <p class="note" id="ruleTxt"></p>
+      <canvas id="tchart"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--ink)"></i>Indoor</span><span><i style="background:none;border:1px dashed var(--muted)"></i>Outdoor</span>
+        <span><i style="background:var(--warn)"></i>Trigger</span><span><i style="background:var(--ok)"></i>Comfortable</span>
+        <span><i style="background:var(--limit)"></i>Agent re-trigger</span><span><i style="background:var(--bldg)"></i>HVAC running</span>
+      </div>
+      <p class="note" id="wxSrc"></p>
+    </div>
+
+    <div class="panel" id="tab-sizing" hidden>
+      <p class="note">Runs this night for 25 combinations of rooftop solar and EV storage and compares the monthly bill with today's. Add installed-cost quotes to see payback; without them it shows operating savings only.</p>
+      <div class="controls">
+        <label>Solar installed $ per kW<input type="number" id="cpv" min="0" step="50" placeholder="quote"></label>
+        <label>Storage installed $ per kWh<input type="number" id="cbk" min="0" step="50" placeholder="quote"></label>
+        <button id="sizeRun" class="primary">Compare sizes</button>
+      </div>
+      <div style="overflow-x:auto;margin-top:12px"><table class="sz" id="sizing"></table></div>
+      <p class="note" id="sizeTxt"></p>
+    </div>
+
+    <div class="panel" id="tab-stress" hidden>
+      <p class="note" style="margin-top:0">Runs the night many times instead of once. Each van's plug-in time is drawn from <b>real City of Palo Alto charging sessions</b> (2016–2019, weekday arrivals from 13:00), and its return battery is varied by ±15% (an assumption, not from data). It shows how far the saving moves, and how often every van is ready. A "monthly" figure means 30 nights like that night.</p>
+      <div class="controls">
+        <label>Nights<select id="stressN"><option value="50">50</option><option value="100" selected>100</option><option value="200">200</option></select></label>
+        <button id="stressRun" class="primary">Run stress test</button><span class="note" id="stressProg"></span>
+      </div>
+      <div id="stressOut" style="margin-top:12px"></div>
+    </div>
+
+    <div class="panel" id="tab-life" hidden>
+      <p class="note" style="margin-top:0">How long the depot's batteries last and what each kWh through EV storage costs in lost battery life. Fade rates come from a public <b>synthetic</b> battery dataset (50,000 readings, 2,600 packs) — a simulated degradation model, not a warranty. The pack is assumed replaced at 80% health with no resale value. The Solar &amp; Storage agent uses this wear cost to decide whether buying cheap grid power to use at peak is still worth it.</p>
+      <div class="controls">
+        <label>Chemistry for this site<select id="lifeChem"><option value="NMC">NMC</option><option value="LFP">LFP</option><option value="NCA">NCA</option><option value="LMO">LMO</option></select></label>
+        <label>Pack cost $ per kWh<input type="number" id="lifeUsd" min="0" step="10"></label>
+      </div>
+      <div style="overflow-x:auto;margin-top:12px"><table class="sz" id="lifeTable"></table></div>
+      <p class="note" id="lifeTxt"></p>
+    </div>
+
+    <div class="panel" id="tab-agents" hidden>
+      <p class="note" style="margin-top:0">Eleven agents run the Corporate Office, grouped under three centralized command agents. Each agent owns one decision; anything that moves stops between vans or reschedules customers waits for a person.</p>
+      <div id="agentCards"></div>
+      <div id="proposals"></div>
+    </div>
+
+    <div class="panel" id="tab-activity" hidden>
+      <div class="main" style="margin:0">
+        <div><h2>Agent decisions</h2><div id="alog"></div></div>
+        <div><h2>Chargers and vans</h2><div id="log"></div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab-rates" hidden>
+      <div class="main" style="margin:0">
+        <div>
+          <h2 id="bevName">EV charging meter</h2>
+          <div id="bevTable"></div>
+          <h2 style="margin-top:18px">Corporate Office meter</h2>
+          <p class="note" id="tariffNow"></p>
+          <div class="controls"><button id="tload">Find Corporate Office tariffs (OpenEI)</button><select id="tsel" style="max-width:100%;display:none"></select></div>
+        </div>
+        <div>
+          <h2>watsonx.ai operational brief <span class="tag">(Granite)</span></h2>
+          <div id="brief" class="note" style="white-space:pre-wrap">Generated automatically at 06:00, or press the button.</div>
+          <button id="gen" style="margin-top:8px">Generate brief now</button>
+          <details><summary>Payload sent to watsonx</summary><pre id="payload">{}</pre></details>
+          <details><summary>Connect to IBM Cloud (optional)</summary>
+            <p class="note">The bundled <code>server.py</code> calls Granite when <code>WATSONX_API_KEY</code> and <code>WATSONX_PROJECT_ID</code> are set. Or enter your own endpoint that accepts the JSON payload and returns <code>{"text": "..."}</code>.</p>
+            <input type="text" id="endpoint" placeholder="https://your-backend.example.com/summarize">
+          </details>
+          <p class="note" id="dataSrc" style="margin-top:12px"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<dialog id="setup">
+  <div class="wiz" id="wiz"></div>
+</dialog>
+
+<script src="common.js"></script>
+<script src="reference-data.js"></script>
+<script src="depot-engine.js"></script>
+<script src="data-tools.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const DEFAULT_TARIFF = {utility:'Pacific Gas & Electric Co', name:'B-10 Medium General Demand Service (Secondary Voltage)',
+  energy_min_per_kwh:0.19139, energy_max_per_kwh:0.33947, uri:'https://apps.openei.org/IURDB/', source:'bundled default (OpenEI URDB, Oct 2026)'};
+const DEFAULT_SETUP = {hasSolar:true, solarKw:60, hasStorage:true, battKwh:100, battKw:50, reserve:20, gridTopUp:true, limit:150, base:8, chem:'NMC', battUsd:200};
+let S = null, B = null, timer = null, WX = null, SOLAR = null, ARRIVALS = null, DISPATCH_RES = null, TARIFF = DEFAULT_TARIFF, tariffList = [];
+let RUNMODE = 'night', OUTPLAN = '', PLAN_LAST = false;
+try { RUNMODE = localStorage.getItem('runMode')==='day' ? 'day' : 'night'; } catch(e){}
+const T0 = () => S && S.cfg.day ? DAY_START_MIN : START_MIN;
+const ARR_PATTERNS = {morning:[7*60,7*60+20,7*60+40,8*60,8*60+20], spread:[8*60,11*60+30,15*60,18*60+30,22*60], evening:[16*60+30,16*60+50,17*60+10,17*60+30,17*60+50], late:[22*60,22*60+20,22*60+40,23*60,23*60+20]};
+let ARRPAT = '';
+const OUT_PLANS = {mid:[11*60, 14*60], peak:[17*60, 19.5*60], night:[23*60, 26*60]};
+let SETUP = null, sidP = null, sbuf = [], ebuf = [], TAB = 'savings';
+try { const t = JSON.parse(localStorage.getItem('tariff')||'null'); if (t && t.energy_min_per_kwh) TARIFF = t; } catch(e){}
+try { SETUP = JSON.parse(localStorage.getItem('siteSetup')||'null'); } catch(e){}
+
+// arrival pattern: when each van plugs in (minutes after the 13:00 anchor the engine uses); keeps the return battery from the last Dispatch run
+function arrivalsFor(){
+  const pat = ARR_PATTERNS[ARRPAT]; if (!pat) return ARRIVALS;
+  const o = {...(ARRIVALS || {})}; FLEET.forEach((f, i) => { o[f.name] = {...(o[f.name] || {}), plug: pat[i] - START_MIN}; }); return o;
+}
+function cfgFromUI(){
+  const u = SETUP || DEFAULT_SETUP;
+  return {limit:u.limit, base:u.base, mode:$('mode').value, trig:+$('trig').value, comfort:+$('comfort').value, band:+$('band').value,
+    day:RUNMODE==='day', solarKwp:u.hasSolar ? u.solarKw : 0, battKwh:u.hasStorage ? u.battKwh : 0, battKw:u.hasStorage ? u.battKw : 0, reserve:u.reserve,
+    gridTopUp:u.gridTopUp, storageUse:'peak', managed:true, seed:11, chem:u.chem || 'NMC', battUsdPerKwh:u.battUsd != null ? u.battUsd : 200,
+    bldgPrice:{min:TARIFF.energy_min_per_kwh||0.19, max:TARIFF.energy_max_per_kwh||TARIFF.energy_min_per_kwh||0.19},
+    solarProfile:SOLAR && SOLAR.profile, wx:WX, arrivals:arrivalsFor(),
+    // Learning Agent: inject per-van adjusted charge targets derived from multi-night history.
+    // learningNeeds = { vanName: bumpPct } where bumpPct is added to the van's base need% by plan().
+    learningNeeds:learningAdjust()};
+}
+// ---- front-page solar questionnaire: same answers as wizard step 1, applied live ----
+const SOLAR_SIZES = [20, 40, 60, 80, 100, 150, 200];
+function solarOptions(kw){
+  const sizes = kw && !SOLAR_SIZES.includes(kw) ? [...SOLAR_SIZES, kw].sort((a,b)=>a-b) : SOLAR_SIZES;
+  return `<option value="0" ${kw?'':'selected'}>No solar</option>` + sizes.map(v=>`<option value="${v}" ${v===kw?'selected':''}>${v} kW</option>`).join('');
+}
+function drawSolarQ(){
+  const u = SETUP || DEFAULT_SETUP;
+  $('solarq').innerHTML = `<div style="flex:1;min-width:240px"><h2>Does the Corporate Office have rooftop solar?</h2>
+      <p class="note" style="margin:0">Solar charges vans for free, fills EV storage first, then sends any surplus to the Corporate Office.</p></div>
+    <div class="yn"><button data-v="1" class="${u.hasSolar?'sel':''}">☀ Yes, it has solar</button><button data-v="0" class="${!u.hasSolar?'sel':''}">No solar</button></div>
+    <label>Rooftop solar<select id="sq-kw">${solarOptions(u.hasSolar ? u.solarKw : 0)}</select></label>`;
+  const apply = patch => { SETUP = {...(SETUP || DEFAULT_SETUP), ...patch}; try { localStorage.setItem('siteSetup', JSON.stringify(SETUP)); } catch(e){} init(); };
+  $('solarq').querySelectorAll('.yn button').forEach(b => b.onclick = () => apply({hasSolar:b.dataset.v==='1'}));
+  $('sq-kw').onchange = e => { const v = +e.target.value; apply(v ? {hasSolar:true, solarKw:v} : {hasSolar:false}); };
+}
+function syncRunUI(){
+  const day = RUNMODE==='day';
+  $('runMode').value = RUNMODE; $('arrPat').value = ARRPAT; $('start').textContent = day ? '▶ Start the day' : '▶ Start the night';
+  $('heroTitle').textContent = day ? 'Today at the Corporate Office' : 'Tonight at the Corporate Office';
+  $('tlTitle').textContent = day ? 'PG&E business EV price through the day and night' : 'PG&E business EV price through the night';
+  $('outage').classList.remove('on'); $('outage').textContent = '⚡ Simulate grid outage';
+}
+function init(){
+  stop(); drawSolarQ(); PLAN_LAST = false; syncRunUI();
+  const cfg = cfgFromUI();
+  S = createSim(cfg); B = createSim(baselineCfg(cfg));
+  sidP = null; sbuf = []; ebuf = []; LAST = {}; PROP = {}; COMMS = {}; REPORT = null;
+  $('log').innerHTML = ''; $('alog').innerHTML = '';
+  $('brief').textContent = 'Generated automatically at 06:00, or press the button.'; $('payload').textContent = '{}';
+  $('snap').classList.remove('on'); $('outage').classList.remove('on'); $('outage').textContent = '⚡ Simulate grid outage';
+  buildFlow(); drain(); render();
+  if (TAB==='life') drawLife();
+}
+
+// ---- site setup wizard: ask what the corporate site actually has ----
+let wiz = null;
+function openSetup(){ wiz = {step:0, d:{...(SETUP || DEFAULT_SETUP)}}; drawWiz(); $('setup').showModal(); }
+function drawWiz(){
+  const d = wiz.d, yn = (key, yes, no) => `<div class="yn"><button data-k="${key}" data-v="1" class="${d[key]?'sel':''}">${yes}</button><button data-k="${key}" data-v="0" class="${!d[key]?'sel':''}">${no}</button></div>`;
+  const steps = [
+    () => `<div class="stepn">Step 1 of 3 · Rooftop solar</div><h2>Does the Corporate Office have solar panels on its roof?</h2>
+      <p class="note">Rooftop solar charges vans for free, fills EV storage for the evening peak, and sends any surplus to the Corporate Office.</p>
+      ${yn('hasSolar','☀ Yes, it has solar','No solar')}
+      <div class="fields"><label>Rooftop solar<select id="w-solarKw">${solarOptions(d.hasSolar ? d.solarKw : 0)}</select></label></div>`,
+    () => `<div class="stepn">Step 2 of 3 · EV storage</div><h2>Does the site have EV storage — an on-site battery?</h2>
+      <p class="note">If yes, stored solar is used during the 4–9 pm peak (and during outages). If not, charging simply waits for cheaper hours.</p>
+      ${yn('hasStorage','🔋 Yes, it has storage','No storage')}
+      ${d.hasStorage ? `<div class="fields">
+        <label>Capacity (kWh)<input type="number" id="w-battKwh" value="${d.battKwh}" min="10" step="10"></label>
+        <label>Power (kW)<input type="number" id="w-battKw" value="${d.battKw}" min="5" step="5"></label>
+        <label>Keep for outages (%)<input type="number" id="w-reserve" value="${d.reserve}" min="0" max="80" step="5"></label></div>
+        <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="w-gridTopUp" ${d.gridTopUp?'checked':''}> Top up storage with cheap grid power when solar falls short (before 4 pm)</label>` : ''}`,
+    () => `<div class="stepn">Step 3 of 3 · Site</div><h2>How much power can the site draw?</h2>
+      <p class="note">The grid connection limit (breaker / transformer) and the Corporate Office's usual load without HVAC.</p>
+      <div class="fields"><label>Grid limit (kW)<input type="number" id="w-limit" value="${d.limit}" min="20" step="5"></label>
+      <label>Corporate Office base load (kW)<input type="number" id="w-base" value="${d.base}" min="0" step="1"></label></div>
+      <p class="note"><b>Summary:</b> ${d.hasSolar?`${d.solarKw} kW rooftop solar`:'no rooftop solar'} · ${d.hasStorage?`${d.battKwh} kWh / ${d.battKw} kW EV storage`:'no EV storage'}.</p>`,
+  ];
+  $('wiz').innerHTML = steps[wiz.step]() + `<div class="nav"><button id="w-back" ${wiz.step===0?'disabled':''}>Back</button>
+    <button class="primary" id="w-next">${wiz.step===steps.length-1?'Save and start':'Next'}</button></div>`;
+  $('wiz').querySelectorAll('.yn button').forEach(b=>b.onclick = () => { readWiz(); d[b.dataset.k] = b.dataset.v==='1'; drawWiz(); });
+  $('w-back').onclick = () => { readWiz(); wiz.step--; drawWiz(); };
+  $('w-next').onclick = () => { readWiz(); if (wiz.step < steps.length-1){ wiz.step++; drawWiz(); return; }
+    SETUP = wiz.d; try { localStorage.setItem('siteSetup', JSON.stringify(SETUP)); } catch(e){}
+    $('setup').close(); init(); };
+}
+function readWiz(){
+  const d = wiz.d, num = k => { const el = $('w-'+k); if (el && el.value!=='') d[k] = +el.value; };
+  ['battKwh','battKw','reserve','limit','base'].forEach(num);
+  if ($('w-solarKw') && +$('w-solarKw').value > 0) d.solarKw = +$('w-solarKw').value;
+  if ($('w-solarKw') && +$('w-solarKw').value === 0) d.hasSolar = false;
+  else if ($('w-solarKw')) d.hasSolar = true;
+  if ($('w-gridTopUp')) d.gridTopUp = $('w-gridTopUp').checked;
+}
+
+// ---- data: vans' return battery (Dispatch), solar (NREL PVWatts), weather (Open-Meteo) ----
+async function loadData(){
+  DISPATCH_RES = await latestDispatchResult();
+  ARRIVALS = null;
+  if (DISPATCH_RES){ ARRIVALS = {}; for (const v of DISPATCH_RES.vehicles) ARRIVALS[v.name] = {soc:v.battery_now, plug:v.status==='Out of service' ? 300 : undefined}; }
+  const wx = API.online ? API.j('GET',`/api/weather?lat=${DEPOT.lat}&lon=${DEPOT.lon}`).catch(()=>null) : null;
+  const pv = API.online ? API.j('GET',`/api/solar?lat=${DEPOT.lat}&lon=${DEPOT.lon}&month=${new Date().getMonth()+1}`).catch(()=>null) : null;
+  [WX, SOLAR] = await Promise.all([wx, pv]);
+  $('wxSrc').textContent = WX ? `Outdoor temperature: ${WX.source} forecast for ${DEPOT.name}.`
+    : 'Outdoor temperature: Open-Meteo unreachable from this network — using a typical Oakland October day (21 °C mid-afternoon, 10 °C before dawn).';
+  $('dataSrc').innerHTML = `<b>Data sources.</b> Solar: ${SOLAR ? `NREL PVWatts average for this month (${SOLAR.annual_kwh_per_kwp} kWh per kW per year)` : 'NREL PVWatts unreachable — clear October day in Oakland (≈4.4 kWh per kW)'}. `+
+    `Vans' return battery: ${DISPATCH_RES ? (DISPATCH_RES.id!=null ? 'Dispatch run #'+DISPATCH_RES.id : 'last Dispatch run in this browser') : 'typical levels (no Dispatch run yet)'}. Overnight results feed the next Dispatch run.`;
+}
+
+// ---- logs and persistence ----
+const AGENT_SRC = {agent:{id:'power-agent', label:'Power'}, solar:{id:'solar-storage-agent', label:'Solar & Storage'}, planner:{id:'fleet-planner', label:'Fleet planner'},
+  resilience:{id:'resilience-agent', label:'Resilience'}, demand:{id:'demand-response-agent', label:'Demand response'}, fault:{id:'charger-fault-agent', label:'Charger faults'},
+  health:{id:'battery-health-agent', label:'Battery health'}, comms:{id:'customer-comms-agent', label:'Customer comms'}};
+function drain(){
+  for (const e of S.events.splice(0)){
+    const a = AGENT_SRC[e.src];
+    const d = document.createElement('div'); d.innerHTML = `<b>${fmtClock(e.t)}</b> ${a ? `<span class="note">[${a.label}]</span> ` : ''}${esc(e.text)}`;
+    $(a ? 'alog' : 'log').prepend(d);
+    if (a){ (LAST[e.src] = LAST[e.src] || []).unshift({t:e.t, text:e.text}); LAST[e.src].length = Math.min(LAST[e.src].length, 3); }
+    ebuf.push({ts:e.t, source:a ? a.id : 'gateway', type:'log', text:e.text});
+    const tk = e.src==='fault' && e.text.match(/^(.+?): charger fault .*ticket (MT-\d+) opened/);
+    if (tk && API.online) (async () => { try { await API.j('POST','/api/notifications',{session_id:sidP ? await sidP : null, vehicle:tk[1], kind:'ticket', message:e.text}); } catch(err){} })();
+  }
+}
+// ---- agents tab: what each agent owns, its latest decisions, and the fleet planner's proposals ----
+let LAST = {}, PROP = {};
+function tariffAgentText(){
+  const subKw = S && S.subTarget;
+  const sub = subKw ? `BEV subscription sized to ${subKw} kW from tonight's plan.` : '';
+  if (!tariffList.length) return `${sub} Load tariffs in "Rates & brief" and this agent compares the Corporate Office meter against other rates for your size.`.trim();
+  const cur = TARIFF.energy_min_per_kwh || 0, ok = tariffList.filter(t=>t.applies!==false && t.energy_min_per_kwh);
+  const best = ok.sort((a,b)=>a.energy_min_per_kwh-b.energy_min_per_kwh)[0];
+  if (!best) return sub;
+  const cut = cur ? Math.round((1-best.energy_min_per_kwh/cur)*100) : 0;
+  return `${sub} ` + (cut >= 2 ? `${best.utility} — ${best.name} has a ${cut}% lower energy rate ($${best.energy_min_per_kwh.toFixed(3)} vs $${cur.toFixed(3)}/kWh). Review before switching.` : 'The Corporate Office meter is already on one of the cheapest matching rates.');
+}
+// ---- supervisors: three centralized agents read their member agents and each reach one conclusion; the worst of the three is the depot verdict ----
+const VTEXT = {ok:'GO', watch:'WATCH', action:'ACTION NEEDED'}, VCOL = {ok:'var(--ok)', watch:'var(--warn)', action:'var(--limit)'};
+// a customer draft escalates to the dispatcher once the late van is within 2 hours of departure and still unapproved
+const draftEscalated = d => { const c = S.cars.find(x=>x.name===d.van); return !!c && c.dep - S.t <= 120; };
+function supervisors(cS, cB){
+  const soc = S.battCap ? S.batt/S.battCap*100 : 0, h = S.hist[S.hist.length-1];
+  const props = (S.fleet && S.fleet.proposals) || [], pending = props.filter(p=>!PROP[p.id]);
+  const late = (S.fleet && S.fleet.late) || [], faults = S.cars.filter(c=>c.fault).length;
+  const unresolved = late.filter(n=>!props.some(p=>p.from===n && PROP[p.id]!=='declined'));
+  const drafts = (S.comms || []).filter(d=>!COMMS[d.id]), esc2 = drafts.filter(d=>draftEscalated(d)), reschedules = Object.values(COMMS).filter(x=>x.reply==='reschedule' && !x.handled).length;
+  // Absent vehicles (arrive >= END_MIN — interstate semis not back tonight) count as "on route" not "at risk".
+  const absentAway = c => c.status==='Away' && c.arrive >= END_MIN;
+  const ready = S.cars.filter(c=>c.status==='Departed' ? c.met : absentAway(c) || c.status==='Away' || c.slack>=0).length;
+  const activeVans = S.cars.filter(c=>!absentAway(c)).length;
+  const saved = cB.nightly_usd - cS.nightly_usd, mo = cB.monthly_usd - cS.monthly_usd, peakKwh = cS.grid_kwh.peak;
+  let e = 'ok', eh;
+  if (S.outage){ e = (!S.battCap || soc < 20) ? 'action' : 'watch'; const r = S.resil;
+    eh = `Outage: ${S.battCap ? 'storage '+soc.toFixed(0)+'%' : 'no storage'}${h && h.solar>0.5 ? ' + '+h.solar.toFixed(0)+' kW solar' : ''}${r && r.runtimeH != null && isFinite(r.runtimeH) ? ' — about '+r.runtimeH.toFixed(1)+' h of runtime' : ''}.`; }
+  else if (S.trips > 0){ e = 'action'; eh = `${S.trips} breaker trip${S.trips===1?'':'s'} — site limit exceeded.`; }
+  else { if (S.recovering || peakKwh > 5) e = 'watch';
+    eh = `${money(saved)} saved so far · storage ${S.battCap ? soc.toFixed(0)+'%' : 'none'} · ${peakKwh.toFixed(0)} kWh bought at peak price${S.recovering ? ' · refilling storage after the outage' : ''}.`; }
+  const f = unresolved.length ? 'action' : (pending.length || late.length) ? 'watch' : 'ok';
+  const absentCount = S.cars.length - activeVans;
+  const absentNote = absentCount > 0 ? ` · ${absentCount} semi${absentCount>1?'s':''} on interstate run` : '';
+  const fh = `${ready}/${S.cars.length} vehicles on track${absentNote} · ${late.length} at risk · ${pending.length} swap proposal${pending.length===1?'':'s'} awaiting approval${faults ? ' · '+faults+' charger fault'+(faults===1?'':'s') : ''}.`;
+  const b = esc2.length ? 'action' : (drafts.length || reschedules) ? 'watch' : 'ok';
+  const bh = `${drafts.length} customer draft${drafts.length===1?'':'s'} awaiting approval${esc2.length ? ' ('+esc2.length+' escalated — departure is close)' : ''}${reschedules ? ' · '+reschedules+' customer reschedule request'+(reschedules===1?'':'s')+' to approve' : ''} · ${S.done ? '$'+mo.toLocaleString()+'/month projected saving' : money(saved)+' saved tonight so far'}.`;
+  const all = {energy:{status:e, headline:eh}, fleet:{status:f, headline:fh}, business:{status:b, headline:bh}};
+  const worst = Object.values(all).reduce((a,x)=>Math.max(a, ['ok','watch','action'].indexOf(x.status)), 0), v = ['ok','watch','action'][worst];
+  const issues = Object.entries(all).filter(([,x])=>x.status!=='ok').map(([k,x])=>({energy:'Energy',fleet:'Fleet',business:'Business'}[k])+': '+x.headline);
+  all.verdict = {status:v, label:VTEXT[v], text: issues.length ? issues.join(' ') : 'Energy, Fleet and Business Command all report normal operation.'};
+  return all;
+}
+let COMMS = {}, REPORT = null, FAULTSEL = 0, lastAgentDraw = 0, TREND = {t:0, by:null};
+const mean = a => a.reduce((x,y)=>x+y,0)/a.length;
+// battery health: per-van history across saved nights (SQLite) — arrival battery, cost per stop, delivered vs requested power
+async function loadTrend(){
+  TREND.t = Date.now();
+  try { const ss = (await API.j('GET','/api/sessions')).filter(x=>x.kind==='depot' && x.meta && x.meta.vehicles).slice(0,10), by = {};
+    ss.forEach(x=>x.meta.vehicles.forEach(v=>(by[v.name] = by[v.name] || []).push(v))); TREND.by = by; } catch(e){}
+}
+function healthText(name){
+  const v = (TREND.by && TREND.by[name]) || [];
+  if (v.length < 2) return '';
+  const arr = v.map(x=>x.start_soc), cps = v.filter(x=>x.cost_per_stop!=null).map(x=>x.cost_per_stop), slow = v.filter(x=>x.slow_ratio!=null).map(x=>x.slow_ratio), flags = [];
+  if (v.length >= 3 && arr[0] < mean(arr.slice(1)) - 3) flags.push('arrival battery trending down');
+  if (cps.length >= 3 && cps[0] > mean(cps.slice(1))*1.15) flags.push('cost per stop up '+Math.round((cps[0]/mean(cps.slice(1))-1)*100)+'%');
+  if (slow.length && mean(slow) < 0.85) flags.push('charging at '+Math.round(mean(slow)*100)+'% of requested power');
+  const deep = arr.filter(a=>a<=16).length;
+  return ` · ${v.length} nights: avg arrival ${mean(arr).toFixed(0)}%${deep?`, ${deep} deep discharge${deep===1?'':'s'}`:''}${flags.length?' · ⚠ '+flags.join(', '):''}`;
+}
+// ---- LEARNING AGENT: learningAdjust() ----
+// Agent type: Learning
+// Observes: per-van history stored in SQLite across up to 10 previous nights (TREND.by), loaded by loadTrend().
+// Learns:
+//   1. Slow-charger compensation — if a van has averaged < 85% of its requested power over past nights,
+//      the planner's charge target (need%) is raised so that even at reduced throughput the van will be ready.
+//   2. Deep-discharge guard — if a van arrived with ≤ 16% SoC on the majority of its recorded nights,
+//      an extra 5% is added to the target so the plan builds a larger safety buffer.
+// Acts: returns a map of { vanName → adjustedNeed% } that cfgFromUI() injects into the simulation cfg as
+//   learningNeeds, consumed by plan() in depot-engine.js when computing how much to charge each van.
+// This closes the observe → learn → act loop: history drives tonight's targets automatically.
+function learningAdjust(){
+  if (!TREND.by) return {};
+  const adj = {};
+  for (const [name, records] of Object.entries(TREND.by)){
+    if (records.length < 2) continue;
+    const slow = records.filter(r=>r.slow_ratio != null).map(r=>r.slow_ratio);
+    const arr  = records.map(r=>r.start_soc);
+    let bump = 0;
+    // slow-charger compensation: if the van only gets X% of requested power, request (100/X)% more
+    if (slow.length >= 2 && mean(slow) < 0.85){
+      const ratio = mean(slow);
+      bump += Math.min(10, Math.round((1/ratio - 1) * 100));   // cap at +10 pp to stay realistic
+    }
+    // deep-discharge guard: most nights it arrives nearly empty → add an extra buffer
+    const deepNights = arr.filter(a=>a<=16).length;
+    if (deepNights >= Math.ceil(records.length * 0.5)) bump += 5;
+    if (bump > 0) adj[name] = bump;
+  }
+  return adj;
+}
+// demand response: what the system actually took off the grid during the peak window, vs vans charging on arrival
+function drDelivered(){
+  let w = 0, wo = 0, mins = 0;
+  for (let i = 0; i < S.hist.length; i++){ const a = S.hist[i], b = B.hist[i]; if (!b || a.per !== 'peak') continue;
+    const dt = (S.hist[i+1] ? S.hist[i+1].t : S.t) - a.t; w += a.grid*dt/60; wo += b.grid*dt/60; mins += dt; }
+  return mins ? {mins, w, wo, avgW:w/(mins/60), avgWo:wo/(mins/60)} : null;
+}
+// reporting: the fleet owner's daily + monthly report. Queued in SQLite; sending needs an email/Teams connector.
+function ownerReport(cS, cB, v){
+  const ready = S.cars.filter(c=>c.status==='Departed' ? c.met : c.status==='Away' || c.slack>=0).length, mo = cB.monthly_usd - cS.monthly_usd;
+  const tickets = S.cars.filter(c=>c.ticket).length + (S.tickets||0);
+  return `Fleet owner report — ${DEPOT.name}\nCorporate Office verdict: ${v.verdict.label}. ${v.verdict.text}\n\n` +
+    `Tonight: ${money(cB.nightly_usd-cS.nightly_usd)} saved (${money(cS.nightly_usd)} with the system vs ${money(cB.nightly_usd)} without).\n` +
+    `Month (30 nights like this): $${cS.monthly_usd.toLocaleString()} vs $${cB.monthly_usd.toLocaleString()} — saving $${mo.toLocaleString()}.\n` +
+    `Vans ready: ${ready}/${S.cars.length}. Peak-price grid kWh: ${cS.grid_kwh.peak.toFixed(0)}. Charger tickets opened: ${S.tickets||0}. Breaker trips: ${S.trips}.\nFigures are simulated.`;
+}
+function drawAgents(force){
+  if (!S) return;
+  const panel = $('tab-agents');
+  if (!force && (Date.now() - lastAgentDraw < 1200 || panel.querySelector('button:hover, select:hover, select:focus'))) return;
+  lastAgentDraw = Date.now();
+  const cS = costs(S), cB = costs(B), sup = supervisors(cS, cB), hs = S.hist[S.hist.length-1];
+  const last = k => (LAST[k]||[]).map(x=>`<div class="note"><b>${fmtClock(x.t)}</b> ${esc(x.text)}</div>`).join('') || '<div class="note">No decisions yet.</div>';
+  const pill = st => `<span class="pchip" style="background:${VCOL[st]}">${VTEXT[st]}</span>`;
+  const card = (icon, name, role, body, tag) => `<div class="card" style="margin:0"><h2 style="margin-top:0;font-size:15px">${icon} ${name}</h2><p class="note" style="margin:0 0 6px">${role}</p>${body}${tag?`<p class="note" style="margin:6px 0 0"><i>${tag}</i></p>`:''}</div>`;
+  const group = (icon, name, who, st, members) => `<div class="card" style="margin:0 0 14px;border:2px solid ${VCOL[st.status]}">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center"><h2 style="margin:0">${icon} ${name}</h2>${pill(st.status)}</div>
+    <p style="margin:6px 0 2px"><b>Conclusion:</b> ${esc(st.headline)}</p><p class="note" style="margin:0 0 12px">${who}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:12px">${members.join('')}</div></div>`;
+  const load = hs ? hs.ev + hs.bldg - hs.solar : 0, runH = S.battCap && load > 0.5 ? S.batt*0.95/load : null;
+  if (API.online && Date.now() - TREND.t > 30000) loadTrend().then(() => { if (TAB==='agents') drawAgents(true); });
+  const healthRows = S.cars.map(c=>{ const ratio = c.wantKwh > 0.5 ? c.costKwh/c.wantKwh : 1;
+    // Learning Agent display: show when the learning agent raised this van's charge target tonight.
+    const learnNote = c.learnBump ? ` · 🧠 learning agent raised target by +${c.learnBump}%` : '';
+    return `<div class="note">${esc(c.name)}: $${(c.cost||0).toFixed(2)} tonight ($${((c.cost||0)/c.stops).toFixed(2)}/stop) · ${(c.costKwh||0).toFixed(0)} kWh${c.soc0<=16?' · ⚠ deep discharge on arrival':''}${ratio<0.85?` · ⚠ got ${Math.round(ratio*100)}% of requested power`:''}${learnNote}${(() => { const y = vanLifeYears(S.cfg.chem || 'NMC', c); return y == null ? '' : ` · ~${yrs(y)} to 80% health at this cycling (simulated ${S.cfg.chem || 'NMC'})`; })()}${esc(healthText(c.name))}</div>`; }).join('') +
+    (TREND.by ? '' : '<div class="note">History appears once nights are saved on the server.</div>');
+  const faultRows = S.cars.filter(c=>c.fault).map(c=>`<div class="note">⚠ ${esc(c.name)} — charger fault${c.ticket?', ticket '+c.ticket:''} · down ${Math.round(c.downMin||0)} min</div>`).join('');
+  const btn = (id, v, label, primary) => `<button ${primary?'class="primary" ':''}data-cid="${esc(id)}" data-v="${v}">${label}</button>`;
+  const draftRows = (S.comms||[]).map(d => { const st = COMMS[d.id], mins = Math.round((S.cars.find(x=>x.name===d.van)||{dep:S.t}).dep - S.t);
+    let tail;
+    if (!st) tail = (draftEscalated(d) ? `<b style="color:var(--limit)">⚠ Escalated — ${esc(d.van)} departs in ${mins} min.</b> ` : '') + `<span class="controls" style="display:inline-flex;gap:6px">${btn(d.id,'queued','Approve',true)}${btn(d.id,'declined','Decline')}</span>`;
+    else if (st.state==='declined') tail = '<b>✖ declined</b>';
+    else if (!st.reply) tail = `<b>✅ queued (stored, not sent)</b> — log the customer's reply: <span class="controls" style="display:inline-flex;gap:6px">${btn(d.id,'r:confirmed','Confirmed')}${btn(d.id,'r:reschedule','Asked to reschedule')}${btn(d.id,'r:noreply','No reply')}</span>`;
+    else tail = `<b>✅ queued · reply: ${{confirmed:'confirmed',reschedule:'asked to reschedule'+(st.handled?' (handled)':' — dispatcher approval needed'),noreply:'no reply'}[st.reply]}</b>` + (st.reply==='reschedule' && !st.handled ? ` <span class="controls" style="display:inline-flex">${btn(d.id,'handled','Mark handled')}</span>` : '');
+    return `<div class="note" style="margin:6px 0"><b>${esc(d.van)}:</b> “${esc(d.text)}” ${tail}</div>`; }).join('');
+  const dd = drDelivered(), v0 = sup.verdict, ownerTxt = ownerReport(cS, cB, sup);
+  const brief = $('brief').textContent;
+  $('agentCards').innerHTML =
+    `<div class="card" style="margin:0 0 14px;border:2px solid ${VCOL[sup.verdict.status]}"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center">
+      <h2 style="margin:0">🏁 Corporate Office verdict</h2>${pill(sup.verdict.status)}</div><p style="margin:6px 0 0">${esc(sup.verdict.text)}</p>
+      <p class="note" style="margin:6px 0 0">The three commands below each read their agents and reach one conclusion; the verdict is the worst of the three.</p></div>` +
+    group('⚡','Energy Command','Supervises: Power · Solar &amp; Storage · Tariff · Outage resilience · Demand response', sup.energy, [
+      card('⚡','Charging (Power) agent','When a van plugs in — at any time — weighs price, need, solar and grid capacity, schedules it and decides to charge now or wait. Also keeps the site under its limit and runs HVAC.', ((S.decisions||[]).length ? '<div class="note"><b>Plug-in decisions</b></div>' + S.decisions.slice(0,4).map(d=>`<div class="note"><b>${fmtClock(d.t)}</b> ${esc(d.van)}: ${esc(d.verdict)}</div>`).join('') : '') + last('agent'), 'Decides alone'),
+      card('☀','Solar &amp; Storage agent','Solar → vans → storage → Corporate Office; holds storage for peak and outages; refills it from solar + grid, including when only the Corporate Office is drawing power.', `<div class="note">${S.officeOnly ? 'Only the Corporate Office is drawing power right now.' : 'Vans are charging or away.'}${hs && period(S.t)==='peak' ? ` Peak balance now: storage ${hs.fromBatt.toFixed(0)} kW + grid ${hs.grid.toFixed(0)} kW.` : ''}</div>` + (S.wear ? `<div class="note"><b>Wear-aware:</b> ${S.wear.chem} storage costs $${S.wear.wearPerKwh.toFixed(3)}/kWh in battery life; grid top-up is ${S.wear.gridWorth ? 'worth it' : 'skipped'} (nets $${S.wear.gridMargin.toFixed(3)}/kWh).</div>` : '') + last('solar'), 'Decides alone'),
+      card('💲','Tariff agent','Checks the BEV subscription and the Corporate Office meter rate against alternatives.', `<div class="note">${esc(tariffAgentText())}</div>`, 'Recommends only'),
+      card('🛡','Outage resilience agent','Tracks how long storage + solar can carry the site and who waits.', `<div class="note">${S.outage ? 'OUTAGE — running on storage and solar.' : (runH ? `Grid connected. If it dropped now: about ${runH.toFixed(1)} h on storage + solar.` : 'Grid connected.')}</div>${S.resil && S.resil.rank && S.resil.rank.length ? `<div class="note"><b>Charge order if power is short:</b> ${S.resil.rank.map(r=>esc(r.name)+' ('+r.slack+' min slack)').join(' → ')}</div>` : ''}${last('resilience')}`, 'Decides alone'),
+      card('📉','Demand-response agent','Estimates the flexibility the site could offer the utility at peak.', `<div class="note">${S.dr ? `Peak offer: about ${S.dr.offerKw.toFixed(0)} kW (simulated).` : 'Waiting for the 4–9 pm peak.'}${dd ? ` Delivered so far: the site drew ${dd.avgW.toFixed(0)} kW on average in the peak window vs ${dd.avgWo.toFixed(0)} kW without the system — ${(dd.wo-dd.w).toFixed(0)} kWh less grid power.` : ''}</div>${last('demand')}`, 'Simulated — not enrolled')]) +
+    group('🚐','Fleet Command','Supervises: Fleet planner · Dispatch · Battery health · Charger faults', sup.fleet, [
+      card('🚐','Fleet planner agent','Ranks vans by urgency; proposes route swaps when a van can\'t reach its route charge. Tracks interstate Semis: position, battery and ETA — pre-reserves their charging slot before they arrive.',
+        (() => {
+          const track = (S.fleet && S.fleet.semiTrack) || [];
+          const trackHtml = track.length ? `<div class="note" style="margin-bottom:4px"><b>🚛 Interstate Semi tracker</b></div>` +
+            track.map(tr => {
+              const c = S.cars.find(x=>x.name===tr.name);
+              const loc = tr.onReturn
+                ? `Returning to depot · ${Math.round((1 - tr.pctAlongLeg) * RET_H * 60)} min out`
+                : `Leg ${tr.legIdx + 1} of ${c.stops} · ${Math.round((1 - tr.pctAlongLeg) * LEG_H * 60)} min to next city`;
+              const slotStart = fmtClock(tr.etaSimMin + 30);
+              const slotEnd   = fmtClock(tr.etaSimMin + 30 + tr.chargeHours * 60);
+              return `<div class="note">` +
+                `<b>${esc(tr.name)}</b> — ${esc(loc)}<br>` +
+                `Est. battery now: <b>${tr.socNow}%</b> · ETA depot: <b>${fmtClock(tr.etaSimMin)}</b><br>` +
+                `Charge needed on arrival: <b>${tr.chargeNeeded} kWh</b> (~${tr.chargeHours} h at ${c.chKw} kW)<br>` +
+                `<span style="color:var(--ok)">✓ Slot pre-reserved: ${slotStart} – ${slotEnd}</span>` +
+                `</div>`;
+            }).join('') : '';
+          return trackHtml + last('planner');
+        })(),
+        'Asks the dispatcher before moving stops'),
+      card('🧭','Dispatch agent','Reroutes or waits on traffic; asks before reassigning stops or rescheduling customers.', '<div class="note">Runs on the Dispatch page, starting from tonight\'s charge.</div>', 'Asks the dispatcher'),
+      card('🔋','Battery health agent','Cost per van and wear flags.', healthRows + last('health'), 'Flags only'),
+      card('🔧','Charger fault agent','Detects a plugged-in van that can\'t draw power, opens a maintenance ticket and tells the planner.',
+        `<div class="controls"><select id="faultVan">${S.cars.map((c,i)=>`<option value="${i}" ${i===FAULTSEL?'selected':''}>${esc(c.name)}</option>`).join('')}</select><button id="faultBtn">Toggle charger fault</button></div>${faultRows}${last('fault')}`, 'Opens tickets')]) +
+    group('📨','Business Command','Supervises: Customer communications · Reporting', sup.business, [
+      card('📨','Customer communications agent','Drafts heads-ups for customers of vans likely to leave late. Nothing is sent without approval.', draftRows || '<div class="note">No delays expected.</div>', 'Asks the dispatcher'),
+      card('📄','Reporting agent','Writes the morning brief (Granite when configured).', `<div class="note" style="white-space:pre-wrap">${esc(ownerTxt)}</div><div class="controls" style="margin-top:6px"><button id="briefNow">Generate brief now</button><button id="reportQ">${REPORT ? '✅ Queued for fleet owner' : 'Queue for fleet owner'}</button></div><div class="note">Queued reports are stored on the server. Nothing is emailed until an email or Teams connector is set up.</div>`, 'Needs approval to send')]);
+  const props = (S.fleet && S.fleet.proposals) || [];
+  $('proposals').innerHTML = props.length ? '<h2 style="margin-top:6px">Route swaps awaiting dispatcher approval</h2>' + props.map(p => {
+    const st = PROP[p.id];
+    return `<div class="card" style="margin:8px 0"><div>${esc(p.text)}</div>` + (st ? `<p class="note"><b>${st==='approved'?'✅ Approved':'✖ Declined'}</b> by dispatcher.</p>`
+      : `<div class="controls" style="margin-top:8px"><button class="primary" data-pid="${esc(p.id)}" data-v="approved">Approve</button><button data-pid="${esc(p.id)}" data-v="declined">Decline</button></div>`) + '</div>';
+  }).join('') : '';
+  panel.querySelectorAll('button[data-pid]').forEach(b => b.onclick = () => {
+    PROP[b.dataset.pid] = b.dataset.v;
+    ebuf.push({ts:S.t, source:'fleet-planner', type:'approval', text:`${b.dataset.pid}: ${b.dataset.v} by dispatcher`}); drawAgents(true); render();
+  });
+  panel.querySelectorAll('button[data-cid]').forEach(b => b.onclick = async () => {
+    const d = (S.comms||[]).find(x=>x.id===b.dataset.cid), v = b.dataset.v;
+    if (v==='queued' || v==='declined') COMMS[d.id] = {state:v, reply:null, handled:false};
+    else if (v==='handled') COMMS[d.id].handled = true;
+    else { COMMS[d.id].reply = v.slice(2); if (v==='r:reschedule') S.events.push({t:S.t, src:'comms', text:`${d.van}'s customers asked to reschedule — needs dispatcher approval before any change.`}); }
+    if (v==='queued' && API.online){ try { await API.j('POST','/api/notifications',{session_id:sidP ? await sidP : null, vehicle:d.van, kind:'delay', message:d.text}); } catch(e){} }
+    ebuf.push({ts:S.t, source:'customer-comms-agent', type:'approval', text:`${d.id}: ${v} by dispatcher`}); drain(); drawAgents(true); render();
+  });
+  if ($('faultVan')) $('faultVan').onchange = e => { FAULTSEL = +e.target.value; };
+  if ($('faultBtn')) $('faultBtn').onclick = () => { const c = S.cars[FAULTSEL]; c.fault = !c.fault; S.nextPlan = S.t; drawAgents(true); };
+  if ($('briefNow')) $('briefNow').onclick = generateBrief;
+  if ($('reportQ')) $('reportQ').onclick = async () => { REPORT = true;
+    if (API.online){ try { await API.j('POST','/api/notifications',{session_id:sidP ? await sidP : null, vehicle:null, kind:'report', message:ownerTxt}); } catch(e){} }
+    ebuf.push({ts:S.t, source:'reporting-agent', type:'log', text:'Fleet owner report queued.'}); drawAgents(true); };
+}
+async function flush(){
+  if (!API.online || !S) return;
+  try {
+    if (!sidP) sidP = API.j('POST','/api/sessions',{kind:'depot', meta:{limit_kw:S.cfg.limit, solar_kw:S.cfg.solarKwp, battery_kwh:S.cfg.battKwh, day:!!S.cfg.day, outage_plan:OUTPLAN}}).then(r=>r.id);
+    const sid = await sidP, s = sbuf.splice(0), e = ebuf.splice(0);
+    if (s.length) await API.j('POST',`/api/sessions/${sid}/samples`,s);
+    if (e.length) await API.j('POST',`/api/sessions/${sid}/events`,e);
+  } catch(err){ /* history is best-effort */ }
+}
+async function saveResult(text, p, source){
+  let sid = null;
+  if (API.online){
+    try { await flush(); sid = await sidP;
+      await API.j('POST',`/api/sessions/${sid}/brief`,{text, payload:p, source});
+      await API.j('POST',`/api/sessions/${sid}/end`, p);
+    } catch(err){}
+  }
+  try { localStorage.setItem('depotResult', JSON.stringify({id:sid, saved:Date.now()/1000, vehicles:p.vehicles})); } catch(e){}
+}
+
+// ---- loop ----
+function tick(){
+  const dt = +$('speed').value;
+  applyOutagePlan();
+  step(S, dt); step(B, dt);
+  const hS = S.hist[S.hist.length-1], hB = B.hist[B.hist.length-1];
+  sbuf.push({t:hS.t, bldg:hS.bldg, ch_kw:hS.ev, un_kw:hB.grid, limit:S.cfg.limit, grid:hS.grid, solar:hS.solar, batt:hS.batt, price:hS.price});
+  if (sbuf.length >= 12) flush();
+  drain(); render();
+  if (S.done){ stop(); generateBrief(); }
+}
+function stop(){ clearInterval(timer); timer = null; if (S && !S.done && S.hist.length) $('start').textContent = '▶ Resume'; flush(); }
+
+// ---- rendering ----
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const money = v => '$' + (Math.abs(v) >= 1000 ? Math.round(v).toLocaleString() : v.toFixed(2));
+const last = () => S.hist[S.hist.length-1] || {t:S.t, bldg:S.cfg.base, ev:0, solar:0, toBatt:0, solarToBatt:0, gridToBatt:0, solarToEv:0, solarToBldg:0, exportKw:0, fromBatt:0, grid:S.cfg.base, batt:S.battCap?S.batt/S.battCap*100:null};
+
+function statusLine(){
+  const h = last(), per = period(S.t), cS = costs(S), cB = costs(B);
+  const ready = S.cars.filter(c=>c.met).length;
+  if (!S.hist.length) return `${S.cfg.day ? 'The day starts at <b>06:00</b> with the vans out on their routes; they return from <b>13:00</b> and must be ready by dawn. Press <b>Start the day</b> to watch rooftop solar fill storage and power the Corporate Office, then' : 'Vans come back from their routes from <b>13:00</b> and must be ready by dawn. Press <b>Start the night</b> to'} watch the power agent plan around PG&amp;E's peak prices${S.cfg.solarKwp?', rooftop solar':''}${S.battCap?' and EV storage':''}.`;
+  if (S.done) return `${S.cfg.day ? 'Day' : 'Night'} complete — <b>${ready} of ${S.cars.length} vans</b> ready for their routes. The system cost <b>$${cS.nightly_usd}</b> instead of $${cB.nightly_usd}: about <b>$${(cB.monthly_usd-cS.monthly_usd).toLocaleString()} a month</b> saved.`;
+  if (S.outage) return (S.battCap || S.cfg.solarKwp)
+    ? `<b>Grid outage.</b> ${[S.battCap?'EV storage':'', h.solar>0.5?'rooftop solar':''].filter(Boolean).join(' and ')||'Backup'} ${S.battCap&&h.solar>0.5?'are':'is'} powering the Corporate Office — HVAC shed, most urgent vans charge first.`
+    : '<b>Grid outage.</b> The site has no solar or storage, so the Corporate Office is down until the grid returns.';
+  const parts = [];
+  if (per==='peak'){
+    parts.push(`<b>Peak price</b> ($${PRICE.peak.toFixed(3)}/kWh) until 21:00.`);
+    if (S.battCap && h.fromBatt>0.5) parts.push(`EV storage is supplying <b>${h.fromBatt.toFixed(0)} kW</b>${h.solar>0.5?` and rooftop solar ${h.solar.toFixed(0)} kW`:''}.`);
+    else if (h.solar>0.5) parts.push(`Rooftop solar is supplying ${h.solar.toFixed(0)} kW.`);
+    parts.push(h.ev<0.5 ? 'Charging is on hold until off-peak.'
+      : h.evImport<0.5 ? `Charging ${h.ev.toFixed(0)} kW without peak-price grid power.`
+      : `Charging ${h.ev.toFixed(0)} kW — ${h.evImport.toFixed(0)} kW from the grid at peak price because a van is critical.`);
+    return parts.join(' ');
+  }
+  if (h.solar>0.5){
+    const to = [h.solarToEv>0.5?`vans ${h.solarToEv.toFixed(0)} kW`:'', h.solarToBldg>0.5?`Corporate Office ${h.solarToBldg.toFixed(0)} kW`:'', h.solarToBatt>0.5?`EV storage ${h.solarToBatt.toFixed(0)} kW`:''].filter(Boolean);
+    parts.push(`<b>Rooftop solar ${h.solar.toFixed(0)} kW</b>${to.length?' → '+to.join(', '):''}.`);
+  }
+  const n = S.cars.filter(c=>c.amps>0).length;
+  parts.push(`${PERIOD_NAME[per].split(' (')[0]} price ($${PRICE[per].toFixed(3)}/kWh): ${n} van${n===1?'':'s'} charging, ${h.grid.toFixed(0)} of ${S.cfg.limit} kW grid in use.`);
+  return parts.join(' ');
+}
+function render(){
+  if (!S) return;
+  const per = period(S.t), cS = costs(S), cB = costs(B);
+  $('status').innerHTML = statusLine();
+  $('kClock').textContent = fmtClock(S.t);
+  $('kClockL').textContent = S.done ? 'Night complete' : S.hist.length ? 'Simulated time' : 'Simulation starts';
+  $('kPrice').textContent = '$'+PRICE[per].toFixed(3);
+  $('kPriceL').textContent = PERIOD_NAME[per]+' per kWh';
+  $('kReady').textContent = S.cars.filter(c=>c.status==='Departed' ? c.met : c.status==='Away' || c.slack>=0).length+'/'+S.cars.length;
+  const saved = cB.nightly_usd - cS.nightly_usd, mo = cB.monthly_usd - cS.monthly_usd;
+  $('kSave').textContent = S.done ? '$'+mo.toLocaleString() : money(saved);
+  $('kSaveL').textContent = S.done ? `Saved per month (${Math.round((1-cS.monthly_usd/cB.monthly_usd)*100)}% less)` : (S.cfg.day ? 'Saved so far today' : 'Saved tonight so far');
+  $('bigSave').textContent = S.done ? '$'+mo.toLocaleString()+' / month' : money(saved);
+  $('bigSaveL').textContent = S.done ? `saved — ${Math.round((1-cS.monthly_usd/cB.monthly_usd)*100)}% less than vans charging the moment they plug in ($${cS.monthly_usd.toLocaleString()} instead of $${cB.monthly_usd.toLocaleString()}).` : 'saved tonight so far, compared with vans charging the moment they plug in.';
+  const u = SETUP || DEFAULT_SETUP, sunKw = S.cfg.solarKwp*solarPerKwp(S.t, S.cfg.solarProfile), sunUp = solarPerKwp(S.t, S.cfg.solarProfile) > 0.01;
+  $('kSolar').textContent = S.cfg.solarKwp ? sunKw.toFixed(0)+' kW' : 'None';
+  $('kSolarL').textContent = !S.cfg.solarKwp ? 'No rooftop solar' : sunUp ? '☀ Daytime — solar producing' : '🌙 Night — solar off';
+  $('chips').innerHTML = [
+    `<span class="chip">${sunUp ? '☀ Daytime' : '🌙 Night'} · ${fmtClock(S.t)}</span>`,
+    `<span class="chip ${u.hasSolar?'':'off'}">☀ ${u.hasSolar?u.solarKw+' kW rooftop solar':'No rooftop solar'}</span>`,
+    `<span class="chip ${u.hasStorage?'':'off'}">🔋 ${u.hasStorage?`${u.battKwh} kWh EV storage · ${u.reserve}% kept for outages`:'No EV storage'}</span>`,
+    `<span class="chip">⚡ ${u.limit} kW grid limit</span>`,
+    `<span class="chip">🏁 Corporate Office verdict: ${supervisors(cS, cB).verdict.label}</span>`,
+    `<span class="chip">🚐 ${DISPATCH_RES ? 'Vans return with battery from last Dispatch run' : 'Typical return battery'}</span>`].join('');
+  renderTimeline(); drawFlow(); renderVans(); renderCosts(cS, cB); renderTariff();
+  $('ruleTxt').textContent = S.cfg.mode==='agent' ? (() => { const r = hvacRule(S.cfg, S); return `Power agent: HVAC stops once it's ${r.comfort} °C inside, and re-triggers only at ${r.retrig.toFixed(1)} °C (${r.band}% below the ${S.ref!=null?'actual '+S.ref.toFixed(1)+' °C':r.trig+' °C'} trigger) — frees ${HVAC_KW} kW for chargers.`; })()
+    : S.cfg.mode==='standard' ? `Standard thermostat: on at ${S.cfg.trig} °C, off at ${(S.cfg.trig+STD_BAND).toFixed(1)} °C.` : 'HVAC forced on — a 30 kW demand spike all night.';
+  $('bNote').textContent = S.battCap ? `${S.battCap} kWh / ${S.battKw} kW · ${S.cfg.reserve}% kept for outages (dashed line) · supplied ${cS.battery_out_kwh} kWh tonight` : 'This site has no EV storage (change it in Site setup).';
+  if (TAB==='power'){ drawPower(); drawBatt(); }
+  if (TAB==='building') drawTemp();
+  if (TAB==='agents') drawAgents();
+}
+
+// price timeline 13:00 → 06:00
+function renderTimeline(){
+  const span = END_MIN-T0(), segs = [];
+  for (let m=T0(); m<END_MIN; m+=SLOT){ const p = period(m), l = segs[segs.length-1]; if (l && l.p===p) l.end = m+SLOT; else segs.push({p, start:m, end:m+SLOT}); }
+  const col = {peak:'var(--limit)', off:'var(--load)', super:'var(--ok)'}, name = {peak:'Peak $0.357', off:'Off-peak $0.165', super:'Super off-peak $0.138'};
+  $('timeline').innerHTML = segs.map(s=>`<div style="width:${(s.end-s.start)/span*100}%;background:${col[s.p]}">${(s.end-s.start)>=90?name[s.p]:''}</div>`).join('');
+  $('tlLabels').innerHTML = (S.cfg.day ? [6,9,12,15,18,21,24,27,30] : [13,16,21,24,27,30]).map(hh=>`<span style="left:${(hh*60-T0())/span*100}%">${fmtClock(hh*60)}</span>`).join('');
+  $('now').style.left = `calc(${Math.min(100,(S.t-T0())/span*100)}% - 1px)`;
+  const nxt = segs.find(s=>s.start > S.t);
+  $('nextTxt').textContent = S.done ? '' : nxt ? `Now ${PERIOD_NAME[period(S.t)].toLowerCase()} · next: ${PERIOD_NAME[nxt.p]} at ${fmtClock(nxt.start)}` : '';
+}
+
+// live energy flow diagram
+const NODES = {solar:{x:30,y:20,t:'☀ Rooftop solar'}, grid:{x:550,y:20,t:'⚡ Grid (PG&E)'}, storage:{x:30,y:300,t:'🔋 EV storage'},
+               vans:{x:550,y:300,t:'🚐 Chargers'}, bldg:{x:290,y:316,t:'🏢 Office load'}};
+const HUB = {x:380, y:190};
+function buildFlow(){
+  const c = n => ({x:NODES[n].x+90, y:NODES[n].y+35});
+  const path = (a, b) => `M${a.x} ${a.y} L${b.x} ${b.y}`;
+  const edges = [['solar', c('solar'), HUB], ['gridIn', c('grid'), HUB], ['gridOut', HUB, c('grid')], ['stIn', HUB, c('storage')],
+                 ['stOut', c('storage'), HUB], ['vans', HUB, c('vans')], ['bldg', HUB, {x:c('bldg').x, y:c('bldg').y-35}]];
+  $('flow').innerHTML = edges.map(([id,a,b])=>`<path class="edge" id="e-${id}" d="${path(a,b)}"/>`).join('') +
+    edges.map(([id,a,b])=>`<text class="lbl" id="l-${id}" x="${(a.x+b.x)/2 + (id==='gridOut'||id==='stIn'?14:-14)}" y="${(a.y+b.y)/2 + (id==='gridOut'||id==='stIn'?18:-6)}" text-anchor="middle"></text>`).join('') +
+    `<circle cx="${HUB.x}" cy="${HUB.y}" r="34" fill="var(--load)"/><text x="${HUB.x}" y="${HUB.y-2}" text-anchor="middle" style="fill:#fff;font-weight:700;font-size:11px">Corporate</text><text x="${HUB.x}" y="${HUB.y+12}" text-anchor="middle" style="fill:#fff;font-weight:700;font-size:11px">Office</text>` +
+    Object.entries(NODES).map(([k,n])=>`<g class="node" id="n-${k}"><rect x="${n.x}" y="${n.y}" width="180" height="70" rx="12"/>
+      <text x="${n.x+14}" y="${n.y+28}" style="font-size:15px;font-weight:700">${n.t}</text><text class="sub" id="v-${k}" x="${n.x+14}" y="${n.y+52}"></text></g>`).join('');
+}
+function drawFlow(){
+  const h = last(), set = (id, v, color) => {
+    const e = $('e-'+id), l = $('l-'+id), on = v > 0.3;
+    e.classList.toggle('on', on); e.style.stroke = on ? color : ''; e.style.strokeWidth = on ? 3 + Math.min(9, v/4) : '';
+    l.textContent = on ? v.toFixed(1)+' kW' : ''; l.style.fill = color;
+  };
+  const sunC = css('--hero-sun'), purple = '#a142f4';
+  const gridIn = S.outage ? 0 : h.grid, gridOut = h.exportKw||0;
+  set('solar', h.solar, sunC); set('gridIn', gridIn, css('--ink')); set('gridOut', gridOut, sunC);
+  set('stIn', h.toBatt, purple); set('stOut', h.fromBatt, purple); set('vans', h.ev, css('--load')); set('bldg', h.bldg, css('--bldg'));
+  const dim = (k, d) => $('n-'+k).classList.toggle('dim', d);
+  dim('solar', !S.cfg.solarKwp); dim('storage', !S.battCap); dim('grid', S.outage);
+  $('v-solar').textContent = S.cfg.solarKwp ? `${h.solar.toFixed(1)} of ${S.cfg.solarKwp} kW` : 'Not installed';
+  $('v-grid').textContent = S.outage ? 'OUTAGE' : `${PERIOD_NAME[period(S.t)].split(' (')[0]} · $${PRICE[period(S.t)].toFixed(3)}`;
+  $('v-storage').textContent = S.battCap ? `${Math.round(S.batt/S.battCap*100)}% · ${h.fromBatt>0.3?'supplying':h.toBatt>0.3?'filling':'holding'}` : 'Not installed';
+  $('v-vans').textContent = `${S.cars.filter(c=>c.amps>0).length} charging · ${h.ev.toFixed(1)} kW`;
+  $('v-bldg').textContent = `${h.bldg.toFixed(1)} kW · HVAC ${S.hvac?'on':'off'} · ${S.tin.toFixed(1)} °C`;
+}
+
+// a driver plugs a van in whenever they like: the charging agent weighs price, need, solar and grid capacity, then decides to charge now or wait
+function plugInVan(i){
+  const c = S.cars[i]; if (!c || c.status!=='Away') return;
+  plugIn(S, c); if (B.cars[i].status==='Away') B.cars[i].arrive = B.t;
+  drain(); render();
+}
+$('vans').addEventListener('click', e => { const b = e.target.closest('[data-plug]'); if (b) plugInVan(+b.dataset.plug); });
+function renderVans(){
+  if ($('vans').querySelector('button:hover')) return;   // don't swap the button out from under the pointer
+  const col = {Charging:'var(--ok)', Throttled:'var(--warn)', Paused:'var(--limit)', Scheduled:'var(--idle)', Ready:'var(--load)', Away:'var(--idle)'};
+  const pcol = {peak:'var(--limit)', off:'var(--load)', super:'var(--ok)'};
+  // A Semi (or any vehicle) whose arrive time falls beyond the session end won't return tonight.
+  const absentTonight = c => c.arrive >= END_MIN;
+  // Live tracking data for absent Semis, keyed by name
+  const trackMap = {};
+  ((S.fleet && S.fleet.semiTrack) || []).forEach(tr => trackMap[tr.name] = tr);
+  $('vans').innerHTML = S.cars.map((c, i)=>{
+    const dep = c.status==='Departed';
+    const absent = c.status==='Away' && absentTonight(c);
+    const f = FLEET[i];
+    const tr = absent ? trackMap[c.name] : null;   // live tracker data for this Semi (if absent)
+
+    // For absent Semis: use live estimated SoC from tracker; for everything else use c.soc
+    const dispSoc  = tr ? tr.socNow : c.soc;
+    // Charge target for next departure: Semi only needs enough for its route (stops*drain + ret + floor + reserve)
+    // needOf() clamps at 100 which is correct for the charger, but we show a realistic target on the bar.
+    // For an absent Semi en-route, the "target" is the charge it will need when it returns for next departure.
+    const nextNeed = tr ? Math.min(100, Math.ceil(c.stops * c.drain + c.ret + FLOOR + RESERVE)) : c.need;
+
+    const label = dep ? (c.met?'Left ✓':'Left short')
+      : absent ? (tr
+          ? (tr.onReturn ? `Returning · ~${Math.round((1-tr.pctAlongLeg)*RET_H*60)} min out`
+                         : `Interstate leg ${tr.legIdx+1}/${c.stops}`)
+          : `On interstate run · back in ~${f.daysOut||1} day${f.daysOut>1?'s':''}`)
+      : c.status==='Away' ? `Back ~${fmtClock(c.arrive)}`
+      : c.status==='Scheduled' ? 'Waiting for cheaper power' : c.status;
+    const bg = dep ? (c.met?'var(--load)':'var(--limit)') : absent ? '#57606a' : col[c.status];
+    const chips = c.status==='Away' || dep ? '' : planSummary(c).slice(0,3).map(r=>`<span class="pchip" style="background:${pcol[r.p]}">${fmtClock(r.start)}–${fmtClock(r.end)}</span>`).join('');
+    const capNote = f.daysOut > 1 ? `${c.cap} kWh · interstate` : `${c.cap} kWh`;
+
+    let socLine;
+    if (absent && tr) {
+      const legDesc = tr.onReturn ? 'returning' : `leg ${tr.legIdx+1} of ${c.stops}`;
+      socLine = `Est. battery now: <b>${tr.socNow}%</b> (${legDesc}) · ETA depot: ${fmtClock(tr.etaSimMin)} · needs ${nextNeed}% charged by departure`;
+    } else if (absent) {
+      socLine = `${dispSoc.toFixed(0)}% at last depot visit · needs ${nextNeed}% when back`;
+    } else {
+      socLine = `${c.soc.toFixed(0)}% now · needs ${c.need}% by ${fmtClock(c.dep)}${c.amps?` · ${(c.amps*VOLTS/1000).toFixed(1)} kW`:''}`;
+    }
+
+    return `<div class="van"><div><b>${c.name}</b><br><small>${capNote}</small></div>
+      <div><div class="socbar"><i style="width:${dispSoc}%;${dispSoc<nextNeed?'background:var(--warn)':''}"></i><u style="left:${nextNeed}%"></u></div>
+        <small>${socLine}</small>${chips?`<div>${chips}</div>`:''}</div>
+      <div style="text-align:right"><span class="badge" style="background:${bg}">${label}</span>${c.status==='Away' && !absent ? `<div><button data-plug="${i}" style="margin-top:6px;padding:4px 8px;font-size:12px">🔌 Plug in now</button></div>` : ''}</div></div>`;
+  }).join('');
+}
+function renderCosts(cS, cB){
+  const row = (label, a, b, fmt, total) => {
+    const d = (a!=null && b!=null) ? a-b : null;
+    return `<tr class="${total?'total':''}"><td>${label}</td><td class="num">${a==null?'—':fmt(a)}</td><td class="num">${b==null?'—':fmt(b)}</td>
+      <td class="num" style="color:${d>0.005?'var(--ok)':d<-0.005?'var(--limit)':'inherit'}">${d==null?'—':(d>0?'−':d<0?'+':'')+fmt(Math.abs(d))}</td></tr>`;
+  };
+  const kwh = v => v.toFixed(1)+' kWh', usd = v => money(v);
+  $('costs').innerHTML = `<thead><tr><th></th><th class="num">Without system</th><th class="num">With system</th><th class="num">Saving</th></tr></thead><tbody>
+    ${row(`Grid power at peak ($${PRICE.peak}/kWh)`, cB.grid_kwh.peak, cS.grid_kwh.peak, kwh)}
+    ${row(`Grid power off-peak ($${PRICE.off}/kWh)`, cB.grid_kwh.off, cS.grid_kwh.off, kwh)}
+    ${row(`Grid power super off-peak ($${PRICE.super}/kWh)`, cB.grid_kwh.super, cS.grid_kwh.super, kwh)}
+    ${row('Rooftop solar used (free)', 0, cS.solar_to_ev_kwh + cS.solar_to_building_kwh, kwh)}
+    ${row('EV storage supplied', 0, cS.battery_out_kwh, kwh)}
+    ${row('EV charging energy', cB.ev_energy_usd, cS.ev_energy_usd, usd)}
+    ${row('Corporate Office energy (HVAC + base)', cB.building_energy_usd, cS.building_energy_usd, usd)}
+    ${row('Tonight total', cB.nightly_usd, cS.nightly_usd, usd, true)}
+    ${row(`BEV subscription / month (${cB.subscription_blocks} vs ${cS.subscription_blocks} × 10 kW)`, cB.subscription_usd_month, cS.subscription_usd_month, usd)}
+    ${row('Per month', S.done?cB.monthly_usd:null, S.done?cS.monthly_usd:null, v=>'$'+v.toLocaleString(), true)}
+    ${S.done && cS.wear_usd_month ? row('Per month after storage wear (battery life used)', cB.monthly_usd, cS.monthly_net_of_wear_usd, v=>'$'+v.toLocaleString(), true) : cS.wear_usd_night ? row('Storage wear tonight (not in the totals above)', 0, cS.wear_usd_night, usd) : ''}
+    ${row('Breaker trips', cB.trips, cS.trips, v=>String(v))}</tbody>`;
+}
+
+// charts (drawn only for the visible tab)
+function bands(g, x, y0, y1){
+  for (let m=T0(); m<END_MIN; m+=SLOT){ const p = period(m); if (p==='off') continue;
+    g.fillStyle = p==='peak' ? 'rgba(217,45,32,.13)' : 'rgba(18,161,80,.13)'; g.fillRect(x(m), y0, x(m+SLOT)-x(m)+0.5, y1-y0); }
+}
+function canvas(id){
+  const cv = $(id), dpr = window.devicePixelRatio||1, W = cv.clientWidth, H = cv.clientHeight;
+  if (!W) return null;
+  cv.width = W*dpr; cv.height = H*dpr; const g = cv.getContext('2d'); g.scale(dpr,dpr); g.clearRect(0,0,W,H);
+  const pad = {l:44, r:10, t:10, b:24};
+  return {g, W, H, pad, w:W-pad.l-pad.r, h:H-pad.t-pad.b, x:m=>pad.l+(m-T0())/(END_MIN-T0())*(W-pad.l-pad.r)};
+}
+function axes(g, c, lo, hi, stepV, unit, y){
+  g.font = '11px system-ui'; g.fillStyle = css('--muted'); g.strokeStyle = css('--line'); g.lineWidth = 1;
+  for (let v=Math.ceil(lo/stepV)*stepV; v<=hi; v+=stepV){ g.beginPath(); g.moveTo(c.pad.l, y(v)); g.lineTo(c.W-c.pad.r, y(v)); g.stroke(); g.fillText(v+unit, 4, y(v)+4); }
+  for (let m=T0(); m<=END_MIN; m+=180) g.fillText(fmtClock(m), c.x(m)-14, c.H-6);
+}
+function line(g, pts, color, width, dash){
+  if (pts.length<2) return; g.setLineDash(dash||[]); g.strokeStyle = color; g.lineWidth = width; g.beginPath();
+  pts.forEach((p,i)=>g[i?'lineTo':'moveTo'](p[0],p[1])); g.stroke(); g.setLineDash([]);
+}
+function drawPower(){
+  const c = canvas('chart'); if (!c) return; const g = c.g, H = S.hist, HB = B.hist;
+  const maxY = Math.max(S.cfg.limit*1.3, 60, ...H.map(p=>Math.max(p.bldg+p.ev+p.toBatt, p.solar)), ...HB.map(p=>p.grid));
+  const y = v => c.pad.t + c.h - v/maxY*c.h;
+  bands(g, c.x, c.pad.t, c.pad.t+c.h); axes(g, c, 0, maxY, 20, ' kW', y);
+  const area = (top, bot, color) => { if (H.length<2) return; g.beginPath();
+    H.forEach((p,i)=>g[i?'lineTo':'moveTo'](c.x(p.t), y(top(p)))); for (let i=H.length-1;i>=0;i--) g.lineTo(c.x(H[i].t), y(bot(H[i])));
+    g.closePath(); g.fillStyle = color; g.fill(); };
+  area(p=>p.bldg, ()=>0, css('--bldg')+'bb'); area(p=>p.bldg+p.ev, p=>p.bldg, css('--load')+'cc'); area(p=>p.bldg+p.ev+p.toBatt, p=>p.bldg+p.ev, '#a142f4aa');
+  line(g, H.map(p=>[c.x(p.t), y(p.solar)]), css('--hero-sun'), 2);
+  line(g, HB.map(p=>[c.x(p.t), y(p.grid)]), css('--muted'), 1.5, [4,4]);
+  line(g, H.map(p=>[c.x(p.t), y(p.grid)]), css('--ink'), 2.5);
+  line(g, [[c.pad.l, y(S.cfg.limit)], [c.W-c.pad.r, y(S.cfg.limit)]], css('--limit'), 2);
+}
+function drawBatt(){
+  const c = canvas('bchart'); if (!c) return; const g = c.g, y = v => c.pad.t + c.h - v/100*c.h;
+  bands(g, c.x, c.pad.t, c.pad.t+c.h); axes(g, c, 0, 100, 25, '%', y);
+  if (!S.battCap) return;
+  line(g, [[c.pad.l, y(S.cfg.reserve)], [c.W-c.pad.r, y(S.cfg.reserve)]], css('--limit'), 1.5, [6,3]);
+  line(g, S.hist.map(p=>[c.x(p.t), y(p.batt)]), '#a142f4', 2.5);
+}
+function drawTemp(){
+  const c = canvas('tchart'); if (!c) return; const g = c.g, r = hvacRule(S.cfg, S);
+  const vals = [...S.hist.flatMap(p=>[p.tin, p.tout]), r.trig, r.comfort, r.retrig, S.tin];
+  const lo = Math.floor(Math.min(...vals)-1), hi = Math.ceil(Math.max(...vals)+1), y = v => c.pad.t + c.h - (v-lo)/(hi-lo)*c.h;
+  axes(g, c, lo, hi, (hi-lo)>12 ? 5 : 2, ' °C', y);
+  g.fillStyle = css('--bldg')+'55'; S.hist.forEach(p=>{ if (p.hvac) g.fillRect(c.x(p.t), c.pad.t, Math.max(1, c.x(p.t+5)-c.x(p.t)), c.h); });
+  const hl = (v, col, d) => line(g, [[c.pad.l, y(v)], [c.W-c.pad.r, y(v)]], col, 1.5, d);
+  hl(r.trig, css('--warn')); hl(r.comfort, css('--ok'), [6,3]); if (S.cfg.mode==='agent') hl(r.retrig, css('--limit'), [6,3]);
+  line(g, S.hist.map(p=>[c.x(p.t), y(p.tout)]), css('--muted'), 2, [4,4]); line(g, S.hist.map(p=>[c.x(p.t), y(p.tin)]), css('--ink'), 2);
+}
+
+// ---- tariffs ----
+function renderTariff(){
+  $('tariffNow').innerHTML = `${esc(TARIFF.utility)} — ${esc(TARIFF.name)} · energy $${(TARIFF.energy_min_per_kwh||0).toFixed(3)}–$${(TARIFF.energy_max_per_kwh||0).toFixed(3)}/kWh (higher rate applied 4–9 pm) · ${esc(TARIFF.source||'')}${TARIFF.uri?` · <a href="${esc(TARIFF.uri)}" target="_blank" rel="noopener">record</a>`:''}`;
+}
+$('bevName').textContent = 'EV charging meter: ' + BEV1.name;
+$('bevTable').innerHTML = `<table><thead><tr><th>Period (every day)</th><th>Hours</th><th class="num">$/kWh</th></tr></thead><tbody>
+  <tr><td><span class="pchip" style="background:var(--limit)">Peak</span></td><td>4 pm – 9 pm</td><td class="num">$${BEV1.peak.toFixed(5)}</td></tr>
+  <tr><td><span class="pchip" style="background:var(--load)">Off-peak</span></td><td>9 pm – 9 am, 2 pm – 4 pm</td><td class="num">$${BEV1.off.toFixed(5)}</td></tr>
+  <tr><td><span class="pchip" style="background:var(--ok)">Super off-peak</span></td><td>9 am – 2 pm</td><td class="num">$${BEV1.superOff.toFixed(5)}</td></tr></tbody></table>
+  <p class="note">Subscription $${BEV1.blockUsd} per 10 kW block per month (replaces demand charges); overage $${BEV1.overageUsd}/kW. Rates effective ${BEV1.effective} — <a href="${BEV1.url}" target="_blank" rel="noopener">PG&amp;E Schedule BEV tariff sheet</a>. BEV needs a meter dedicated to EV charging.</p>`;
+async function loadTariffs(){
+  if (!API.online){ $('tload').textContent = 'Server offline'; return; }
+  $('tload').textContent = 'Loading…';
+  try {
+    tariffList = (await API.j('GET',`/api/tariffs?lat=${DEPOT.lat}&lon=${DEPOT.lon}&kw=${S.cfg.limit}`)).items.filter(t=>t.energy_min_per_kwh);
+    $('tsel').innerHTML = tariffList.map((t,i)=>`<option value="${i}">${t.applies?'':'(size n/a) '}${esc(t.utility)} — ${esc(t.name)}</option>`).join('');
+    $('tsel').style.display = tariffList.length ? '' : 'none'; $('tload').textContent = `${tariffList.length} tariffs found`;
+  } catch(e){ $('tload').textContent = 'Lookup failed — try again'; }
+}
+$('tsel').onchange = () => { const t = tariffList[+$('tsel').value]; if (!t) return;
+  TARIFF = {...t, source:'OpenEI URDB (live)'}; try { localStorage.setItem('tariff', JSON.stringify(TARIFF)); } catch(e){}
+  S.cfg.bldgPrice = B.cfg.bldgPrice = {min:TARIFF.energy_min_per_kwh, max:TARIFF.energy_max_per_kwh||TARIFF.energy_min_per_kwh}; render(); };
+
+// ---- sizing explorer ----
+function runSizing(){
+  const cfg = cfgFromUI(), pvs = [0,30,60,90,120], bks = [0,50,100,150,200];
+  const cpv = $('cpv').value==='' ? null : +$('cpv').value, cbk = $('cbk').value==='' ? null : +$('cbk').value, capex = cpv!=null && cbk!=null;
+  const base = costs(runFull(baselineCfg(cfg))).monthly_usd, grid = {};
+  for (const b of bks) for (const s of pvs) grid[s+':'+b] = costs(runFull({...cfg, solarKwp:s, battKwh:b, battKw:b/2})).monthly_usd;
+  const smart = grid['0:0']; let best = null, bestScore = Infinity;
+  for (const k in grid){
+    const [s,b] = k.split(':').map(Number), extra = smart - grid[k];
+    const score = capex ? (s+b===0 ? Infinity : (extra>0 ? (s*cpv+b*cbk)/(extra*12) : Infinity)) : grid[k];
+    if (score < bestScore){ bestScore = score; best = k; }
+  }
+  $('sizing').innerHTML = `<thead><tr><th>EV storage ↓ / Rooftop solar →</th>${pvs.map(s=>`<th>${s ? s+' kW' : 'none'}</th>`).join('')}</tr></thead><tbody>` +
+    bks.map(b=>`<tr><th>${b ? `${b} kWh / ${b/2} kW` : 'none'}</th>${pvs.map(s=>{
+      const k = s+':'+b, m = grid[k], extra = smart - m;
+      const pay = capex && s+b>0 ? (extra>0 ? `<br><small>payback ${((s*cpv+b*cbk)/(extra*12)).toFixed(1)} yr</small>` : '<br><small>no payback</small>') : '';
+      return `<td class="${k===best?'best':''}">$${m.toLocaleString()}/mo<br><small>saves $${(base-m).toLocaleString()}</small>${pay}</td>`;
+    }).join('')}</tr>`).join('') + '</tbody>';
+  const [bs, bb] = best.split(':').map(Number);
+  $('sizeTxt').innerHTML = `Today (no system): <b>$${base.toLocaleString()}/month</b>. Smart charging alone, no new equipment: $${smart.toLocaleString()} (saves $${(base-smart).toLocaleString()}). ` +
+    (capex ? `Fastest payback: <b>${bs} kW solar + ${bb} kWh storage</b> (${bestScore.toFixed(1)} years on the savings beyond smart charging).`
+           : `Lowest bill: <b>${bs} kW solar + ${bb} kWh storage</b> at $${grid[best].toLocaleString()}/month — bigger keeps lowering the bill with diminishing returns, so add installed-cost quotes to find the size that pays back fastest.`) +
+    ' Based on one typical October night × 30; solar and weather vary by season.';
+}
+
+// ---- watsonx reporter ----
+function buildPayload(){
+  const cS = costs(S), cB = costs(B);
+  return {
+    site:{location:DEPOT.name, limit_kw:S.cfg.limit, window:`${fmtClock(T0())}-${fmtClock(S.t)}`, solar_kw:S.cfg.solarKwp, battery_kwh:S.cfg.battKwh, battery_kw:S.cfg.battKw},
+    tariff:{ev_meter:`${BEV1.name}, effective ${BEV1.effective}`, prices:PRICE, building_meter:`${TARIFF.utility} ${TARIFF.name}`},
+    costs:{with_system:cS, without_system:cB, nightly_savings_usd:+(cB.nightly_usd-cS.nightly_usd).toFixed(2), monthly_savings_usd:cB.monthly_usd-cS.monthly_usd},
+    hvac:{mode:S.cfg.mode, kwh:+S.hvacKwh.toFixed(1), without_system_kwh:+B.hvacKwh.toFixed(1), retriggers:S.cycles, indoor_end_c:+S.tin.toFixed(1)},
+    stats:{peak_grid_kw:cS.peak_site_kw, breaker_trips:S.trips},
+    storage_wear:S.wear ? {chemistry:S.wear.chem, wear_usd_per_kwh:+S.wear.wearPerKwh.toFixed(3), wear_usd_month:cS.wear_usd_month, grid_topup_worth_it:S.wear.gridWorth, source:'simulated degradation model (synthetic public dataset)'} : null,
+    vehicles:S.cars.map(c=>({name:c.name, start_soc:+c.soc0.toFixed(1), end_soc:+c.soc.toFixed(1), energy_kwh:+c.kwh.toFixed(1),
+      departure:fmtClock(c.dep), required_soc:c.need, ready:c.status==='Departed' ? c.met : c.soc>=c.need-0.5,
+      cost_usd:+(c.cost||0).toFixed(2), cost_per_stop:+((c.cost||0)/c.stops).toFixed(2), peak_kwh:+(c.peakKwh||0).toFixed(1),
+      slow_ratio:c.wantKwh>0.5 ? +(c.costKwh/c.wantKwh).toFixed(2) : 1, downtime_min:Math.round(c.downMin||0)})),
+  };
+}
+function localBrief(p){
+  const ready = p.vehicles.filter(v=>v.ready), late = p.vehicles.filter(v=>!v.ready), w = p.costs.with_system, wo = p.costs.without_system;
+  let t = `Corporate Office energy brief (${p.site.window})\n\n`;
+  t += `${ready.length} of ${p.vehicles.length} vans are ready for their routes.${late.length ? ' Needs attention: '+late.map(v=>`${v.name} (${v.end_soc}% vs ${v.required_soc}%)`).join(', ')+'.' : ''}\n\n`;
+  t += `Charging bought ${w.grid_kwh.peak} kWh at the 4–9 pm peak price (vs ${wo.grid_kwh.peak} kWh if vans charged on arrival). Rooftop solar supplied ${(w.solar_to_ev_kwh+w.solar_to_building_kwh).toFixed(1)} kWh and EV storage ${w.battery_out_kwh} kWh. Grid demand peaked at ${p.stats.peak_grid_kw} kW against the ${p.site.limit_kw} kW limit with ${p.stats.breaker_trips} breaker trips.\n\n`;
+  t += `Tonight cost $${w.nightly_usd} instead of $${wo.nightly_usd} — about $${p.costs.monthly_savings_usd.toLocaleString()} a month saved.`;
+  if (p.storage_wear && p.storage_wear.wear_usd_month) t += ` Using EV storage wears the battery about $${p.storage_wear.wear_usd_month} a month (${p.storage_wear.chemistry}, simulated degradation model), which is not in that saving.`;
+  return t + '\n\n[Simulated output — start server.py with watsonx credentials for real Granite generation]';
+}
+async function generateBrief(){
+  if (!S.hist.length){ $('brief').textContent = 'Run the simulation first.'; return; }
+  const p = buildPayload(); p.agents = supervisors(costs(S), costs(B)); $('payload').textContent = JSON.stringify(p, null, 2);
+  const ep = $('endpoint').value.trim() || (API.config.granite ? '/api/summarize' : '');
+  $('brief').textContent = 'Generating…';
+  let text, source = 'template';
+  if (ep){
+    try { const r = await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+      const j = await r.json(); text = j.text || JSON.stringify(j); source = 'watsonx-granite';
+    } catch(e){ text = 'Endpoint failed ('+e.message+'). Falling back to simulated summary.\n\n'+localBrief(p); }
+  } else { await new Promise(r=>setTimeout(r,300)); text = localBrief(p); }
+  const v = supervisors(costs(S), costs(B)).verdict;
+  text += `\n\nCorporate Office verdict (${v.label}): ${v.text}`;
+  $('brief').textContent = text;
+  saveResult(text, p, source);
+}
+
+// ---- controls ----
+$('start').onclick = () => { if (timer){ stop(); return; } if (S.done) init(); $('start').textContent = '❚❚ Pause'; timer = setInterval(tick, 300); };
+$('reset').onclick = init;
+$('openSetup').onclick = openSetup;
+function setOutage(on){
+  S.outage = B.outage = on; $('outage').classList.toggle('on', on);
+  $('outage').textContent = on ? '⚡ Restore grid' : '⚡ Simulate grid outage';
+  S.events.push({t:S.t, src:'resilience', text:on ? 'GRID OUTAGE — switching to EV storage + rooftop solar. HVAC shed; most urgent vans charge first.' : 'Grid restored.'});
+  S.nextPlan = S.t; drain(); render();
+}
+// a scheduled outage starts and ends by itself at the chosen clock times
+function applyOutagePlan(){
+  const o = OUT_PLANS[OUTPLAN]; if (!o) return;
+  const want = S.t >= o[0] && S.t < o[1];
+  if (want !== PLAN_LAST){ PLAN_LAST = want; if (want !== S.outage) setOutage(want); }
+}
+$('outage').onclick = () => setOutage(!S.outage);
+$('runMode').onchange = () => { RUNMODE = $('runMode').value; try { localStorage.setItem('runMode', RUNMODE); } catch(e){} init(); };
+$('arrPat').onchange = () => { ARRPAT = $('arrPat').value;
+  if (['morning','spread'].includes(ARRPAT) && RUNMODE !== 'day'){ RUNMODE = 'day'; try { localStorage.setItem('runMode', RUNMODE); } catch(e){} }   // early plug-ins need the 06:00 start
+  init(); };
+$('outPlan').onchange = () => { OUTPLAN = $('outPlan').value; PLAN_LAST = false; };
+$('snap').onclick = () => { S.snap = B.snap = !S.snap; $('snap').classList.toggle('on', S.snap);
+  S.events.push({t:S.t, src:'agent', text:S.snap ? `Cold snap: outdoor drops ${-SNAP} °C.` : 'Cold snap over.'}); drain(); render(); };
+$('mode').onchange = () => { S.cfg.mode = $('mode').value; B.cfg.mode = S.cfg.mode==='force' ? 'force' : 'standard'; S.engaged = false; S.ref = null;
+  S.events.push({t:S.t, src:'agent', text:`HVAC control set to ${$('mode').selectedOptions[0].text}.`}); drain(); render(); };
+['trig','comfort','band'].forEach(id=>$(id).oninput = () => { S.cfg[id] = B.cfg[id] = +$(id).value; render(); });
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick = () => {
+  TAB = b.dataset.tab;
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active', x===b));
+  document.querySelectorAll('.panel').forEach(p=>p.hidden = p.id !== 'tab-'+TAB);
+  render();
+  if (TAB==='life') drawLife();
+});
+$('gen').onclick = generateBrief;
+$('tload').onclick = loadTariffs;
+$('sizeRun').onclick = () => { $('sizeRun').textContent = 'Running…'; setTimeout(()=>{ runSizing(); $('sizeRun').textContent = 'Compare sizes'; }, 30); };
+// ---- stress test: many randomised nights from the real Palo Alto arrival pattern ----
+const money0 = v => '$' + Math.round(v).toLocaleString();
+async function runStressUI(){
+  const btn = $('stressRun'); btn.disabled = true; btn.textContent = 'Running…';
+  const res = await runStress(cfgFromUI(), +$('stressN').value, (i, n) => { $('stressProg').textContent = ` ${i} of ${n} nights…`; });
+  $('stressProg').textContent = ''; btn.disabled = false; btn.textContent = 'Run stress test again';
+  const row = (label, o, fmt) => `<tr><td style="text-align:left">${label}</td><td class="num">${fmt(o.p10)}</td><td class="num"><b>${fmt(o.p50)}</b></td><td class="num">${fmt(o.p90)}</td></tr>`;
+  const bins = 12, lo = res.save.min, hi = res.save.max, w = (hi - lo) / bins || 1, counts = Array(bins).fill(0);
+  res.nights.forEach(x => counts[Math.min(bins-1, Math.floor((x.save - lo) / w))]++);
+  const top = Math.max(...counts), pc = v => Math.round(v*100) + '%';
+  const missed = Object.entries(res.late).sort((a,b)=>b[1]-a[1]).map(([v,k]) => `${esc(v)} (${k} night${k===1?'':'s'})`).join(', ');
+  $('stressOut').innerHTML = `<p style="margin:0 0 10px"><b>On ${res.n} randomised nights the system saved between ${money0(res.save.p10)} and ${money0(res.save.p90)} a month</b> (median ${money0(res.save.p50)}), and every van was ready for its route on <b>${pc(res.readyShare)}</b> of nights${res.baseReadyShare < 1 ? ` — without the system, ${pc(res.baseReadyShare)}` : ''}.</p>
+    <table class="sz"><thead><tr><th></th><th>Low (10th percentile)</th><th>Median</th><th>High (90th percentile)</th></tr></thead><tbody>
+    ${row('Monthly saving vs no system', res.save, money0)}
+    ${S.wear ? row('…after storage wear', res.saveNet, money0) : ''}
+    ${row('Cost of the night, with the system', res.nightly, v => '$'+v.toFixed(2))}
+    ${row('Cost of the night, without it', res.baseNightly, v => '$'+v.toFixed(2))}
+    ${row('kWh bought at peak price, with the system', res.peakKwh, v => v.toFixed(1))}
+    ${row('kWh bought at peak price, without it', res.basePeakKwh, v => v.toFixed(1))}</tbody></table>
+    <p class="note" style="margin:10px 0 4px">Spread of the monthly saving across the nights (${money0(lo)} to ${money0(hi)}):</p>
+    <div style="display:flex;align-items:flex-end;gap:2px;height:84px">${counts.map((c,i)=>`<div title="${c} nights, ${money0(lo+i*w)}–${money0(lo+(i+1)*w)}" style="flex:1;background:var(--load);border-radius:3px 3px 0 0;height:${Math.max(2, c/top*100)}%"></div>`).join('')}</div>
+    <p class="note">Breaker trips: ${pc(res.tripShare)} of nights with the system, ${pc(res.baseTripShare)} without.${missed ? ' Vans that missed their route charge: '+missed+'.' : ' No van missed its route charge.'}
+    Arrival times come from ${REFDATA.sources[1].used.toLocaleString()} real Palo Alto sessions (commuter and public cars, not delivery vans); the return-battery spread is an assumption. Runs use the current Site setup and always the night window, not the full day.</p>`;
+}
+$('stressRun').onclick = () => setTimeout(runStressUI, 30);
+
+// ---- battery life: chemistry comparison from the public fade table ----
+const yrs = y => !isFinite(y) || y > 20 ? '20+ yr' : y.toFixed(1) + ' yr';
+function drawLife(){
+  const u = SETUP || DEFAULT_SETUP, rows = batteryLife({...cfgFromUI(), day:false}), hasStore = u.hasStorage, usd = u.battUsd != null ? u.battUsd : 200, cur0 = u.chem || 'NMC';
+  $('lifeChem').value = cur0; $('lifeUsd').value = usd;
+  const bestBill = Math.min(...rows.map(r => r.monthlyNet));
+  $('lifeTable').innerHTML = `<thead><tr><th>Chemistry</th><th>Fade per 1,000 cycles</th><th>Cycles to 80% health</th>${hasStore ? '<th>EV storage lasts</th><th>Wear per kWh</th><th>Wear per month</th><th>Grid top-up at peak</th>' : ''}<th>Shortest-lived van</th><th>Monthly bill after wear</th></tr></thead><tbody>` +
+    rows.map(r => { const vanMin = Math.min(...r.vans.map(v => v.years)), s = r.storage;
+      return `<tr style="${r.chem === cur0 ? 'font-weight:600' : ''}"><td>${r.chem}${r.chem === cur0 ? ' ✓' : ''}</td><td>${r.fadePer1000.toFixed(1)}%</td><td>${r.cycles80.toLocaleString()}</td>` +
+        (hasStore ? `<td>${yrs(s.years)}<br><small>${s.cyclesNight.toFixed(2)} cycles a night</small></td><td>$${s.wearPerKwh.toFixed(3)}</td><td>$${s.wearMonth}</td><td>${s.gridWorth ? '✅ worth it' : '✖ skipped'}<br><small>nets $${s.gridMargin.toFixed(3)}/kWh</small></td>` : '') +
+        `<td>${yrs(vanMin)}</td><td class="${r.monthlyNet === bestBill ? 'best' : ''}">$${r.monthlyNet.toLocaleString()}</td></tr>`; }).join('') + '</tbody>';
+  const lfp = rows.find(r => r.chem === 'LFP'), cur = rows.find(r => r.chem === cur0);
+  $('lifeTxt').innerHTML = (hasStore && lfp && cur && lfp !== cur ? `Switching the storage from ${cur.chem} to LFP would stretch its life from ${yrs(cur.storage.years)} to ${yrs(lfp.storage.years)}. ` : '') +
+    `Vans charge on Level 2 only (no DC fast charging), so they use the low fast-charge wear rate. "Cycles to 80%" is the dataset's fitted fade, which does not model calendar ageing separately. Pack cost is your assumption — edit it above.`;
+}
+const applyLife = patch => { SETUP = {...(SETUP || DEFAULT_SETUP), ...patch}; try { localStorage.setItem('siteSetup', JSON.stringify(SETUP)); } catch(e){} init(); };
+$('lifeChem').onchange = e => applyLife({chem:e.target.value});
+$('lifeUsd').onchange = e => { const v = +e.target.value; if (v >= 0) applyLife({battUsd:v}); };
+window.addEventListener('resize', () => S && render());
+initNav('depot').then(async () => { await loadData(); init(); });
+</script>
+</body>
+</html>

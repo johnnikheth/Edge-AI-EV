@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session History</title>
+<link rel="stylesheet" href="common.css">
+<style>
+.card{margin-bottom:0}
+.hist{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:18px;align-items:start}
+@media(max-width:1000px){.hist{grid-template-columns:minmax(0,1fr)}}
+.filters{display:flex;gap:8px;margin-bottom:10px}
+.filters button{border-radius:99px;padding:6px 14px}
+.filters button.sel{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.sess{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:12px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+.sess:hover{background:var(--bg)} .sess.sel{border-color:var(--load);background:var(--bg)}
+.sess .ico{font-size:22px;text-align:center}
+.sess small{color:var(--muted)}
+#detail{position:sticky;top:12px}
+#dchart{height:260px}
+.del{color:var(--limit);cursor:pointer;background:none;border:none;padding:0;font-size:12px}
+.mini-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:12px 0}
+.mini-kpis .kpi b{font-size:22px}
+</style>
+</head>
+<body>
+<div class="wrap wide">
+
+  <section class="herobox">
+    <div class="bg" id="heroBg"></div>
+    <div class="shade"></div>
+    <div class="content">
+      <div>
+        <h1>History</h1>
+        <div id="status">Every Corporate Office night or day and every delivery day is saved on the server (data.db). Pick one to see what happened and what it cost.</div>
+        <div class="actions">
+          <a href="index.html"><button class="primary big">⚡ Run the Corporate Office</button></a>
+          <a href="dispatch.html"><button>🚐 Run a delivery day</button></a>
+        </div>
+      </div>
+      <div class="glass">
+        <div class="kpi"><b id="kNights">0</b><span>Corporate Office runs saved</span></div>
+        <div class="kpi"><b id="kDays">0</b><span>Delivery days saved</span></div>
+        <div class="kpi good"><b id="kSave">—</b><span>Average saving per month (Corporate Office)</span></div>
+        <div class="kpi"><b id="kMsgs">0</b><span>Customer messages sent</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="hist">
+    <div class="card">
+      <h2>Sessions</h2>
+      <div class="filters" id="filters"></div>
+      <div id="rows"><span class="note">Loading…</span></div>
+    </div>
+    <div class="card" id="detail"><span class="note">Select a session on the left.</span></div>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let SESSIONS = [], FILTER = '', SEL = null;
+
+function summary(s){
+  const m = s.meta || {};
+  if (s.kind === 'depot' && m.costs){
+    const ok = (m.vehicles||[]).filter(v=>v.ready).length, w = m.costs.with_system, wo = m.costs.without_system;
+    return `${ok}/${(m.vehicles||[]).length} vans ready · $${w.nightly_usd} vs $${wo.nightly_usd} · saves ≈ $${m.costs.monthly_savings_usd.toLocaleString()}/month`;
+  }
+  if (s.kind === 'depot' && m.vehicles) return `${m.vehicles.filter(v=>v.ready).length}/${m.vehicles.length} vans ready (older format)`;
+  if (s.kind === 'dispatch' && m.vehicles){
+    const d = m.vehicles.reduce((a,v)=>a+v.delivered+v.late,0), l = m.vehicles.reduce((a,v)=>a+v.late,0);
+    return `${d} stops delivered (${l} late) · ${m.customers_notified} customers notified` + (m.approvals ? ` · ${m.approvals.length} approval${m.approvals.length===1?'':'s'}` : '');
+  }
+  return 'in progress / not finished';
+}
+
+async function list(){
+  SESSIONS = await API.j('GET','/api/sessions');
+  const depots = SESSIONS.filter(s=>s.kind==='depot'), days = SESSIONS.filter(s=>s.kind==='dispatch');
+  const saves = depots.map(s=>s.meta && s.meta.costs && s.meta.costs.monthly_savings_usd).filter(v=>v!=null);
+  $('kNights').textContent = depots.length; $('kDays').textContent = days.length;
+  $('kSave').textContent = saves.length ? '$'+Math.round(saves.reduce((a,b)=>a+b,0)/saves.length).toLocaleString() : '—';
+  $('kMsgs').textContent = SESSIONS.reduce((a,s)=>a+(s.n_notifs||0),0);
+  renderList();
+}
+function renderList(){
+  $('filters').innerHTML = [['','All'],['depot','Depot nights'],['dispatch','Delivery days']]
+    .map(([k,t])=>`<button data-k="${k}" class="${k===FILTER?'sel':''}">${t}</button>`).join('');
+  $('filters').querySelectorAll('button').forEach(b=>b.onclick = () => { FILTER = b.dataset.k; renderList(); });
+  const rows = SESSIONS.filter(s=>!FILTER || s.kind===FILTER);
+  $('rows').innerHTML = rows.length ? rows.map(s => `<div class="sess ${s.id===SEL?'sel':''}" data-id="${s.id}">
+      <div class="ico">${s.kind==='depot'?'⚡':'🚐'}</div>
+      <div><b>${s.kind==='depot'?(s.meta&&s.meta.day?'Corporate Office day':'Corporate Office night'):'Delivery day'} #${s.id}</b> <small>· ${new Date(s.started_at*1000).toLocaleString()}</small><br><small>${summary(s)}</small></div>
+      <button class="del" data-del="${s.id}" title="Delete">Delete</button></div>`).join('')
+    : '<p class="note">Nothing saved yet. Run the Corporate Office or a delivery day.</p>';
+  $('rows').querySelectorAll('.sess').forEach(r=>r.onclick = () => open_(+r.dataset.id));
+  $('rows').querySelectorAll('.del').forEach(b=>b.onclick = e => { e.stopPropagation(); del(+b.dataset.del); });
+}
+async function del(id){
+  if (!confirm(`Delete session #${id} and all its data?`)) return;
+  await API.j('DELETE','/api/sessions/'+id); if (SEL===id){ SEL = null; $('detail').innerHTML = '<span class="note">Select a session on the left.</span>'; } list();
+}
+
+function chart(samples){
+  const cv = $('dchart'); if (!cv) return;
+  const dpr = devicePixelRatio||1, W = cv.clientWidth, H = cv.clientHeight; cv.width=W*dpr; cv.height=H*dpr;
+  const g = cv.getContext('2d'); g.scale(dpr,dpr);
+  const pad = {l:44,r:10,t:10,b:24}, w=W-pad.l-pad.r, h=H-pad.t-pad.b, N=samples.length;
+  const lim = samples[0].limit_kw, maxY = Math.max(lim*1.3, ...samples.map(s=>Math.max(s.un_kw||0, s.solar_kw||0)), 60);
+  const x = i => pad.l + i/Math.max(1,N-1)*w, y = v => pad.t + h - v/maxY*h;
+  g.font='11px system-ui'; g.fillStyle=css('--muted'); g.strokeStyle=css('--line');
+  for (let v=0; v<=maxY; v+=20){ g.beginPath(); g.moveTo(pad.l,y(v)); g.lineTo(W-pad.r,y(v)); g.stroke(); g.fillText(v+' kW',4,y(v)+4); }
+  for (let i=0;i<N;i+=Math.ceil(N/6)) g.fillText(fmtClock(samples[i].t),x(i)-12,H-6);
+  const line = (f,c,dash)=>{ g.setLineDash(dash||[]); g.strokeStyle=c; g.lineWidth=2; g.beginPath(); samples.forEach((s,i)=>g[i?'lineTo':'moveTo'](x(i),y(f(s)))); g.stroke(); };
+  line(s=>s.un_kw, css('--muted'), [4,4]);
+  line(s=>s.grid_kw!=null ? s.grid_kw : s.bldg+s.ch_kw, css('--load'));
+  if (samples.some(s=>s.solar_kw)) line(s=>s.solar_kw||0, css('--hero-sun'));
+  g.setLineDash([]); g.strokeStyle=css('--limit'); g.beginPath(); g.moveTo(pad.l,y(lim)); g.lineTo(W-pad.r,y(lim)); g.stroke();
+}
+
+async function open_(id){
+  SEL = id; renderList();
+  const s = await API.j('GET','/api/sessions/'+id), m = s.meta || {};
+  let h = `<h2>${s.kind==='depot'?(s.meta&&s.meta.day?'⚡ Corporate Office day':'⚡ Corporate Office night'):'🚐 Delivery day'} #${s.id}</h2><p class="note">${new Date(s.started_at*1000).toLocaleString()} · ${summary(s)}</p>`;
+  if (s.kind==='depot' && m.costs){
+    const w = m.costs.with_system, wo = m.costs.without_system;
+    h += `<div class="mini-kpis"><div class="kpi good"><b>$${m.costs.monthly_savings_usd.toLocaleString()}</b><span>saved / month</span></div>
+      <div class="kpi"><b>$${w.nightly_usd}</b><span>cost this night (vs $${wo.nightly_usd})</span></div>
+      <div class="kpi"><b>${w.grid_kwh.peak} kWh</b><span>bought at peak (vs ${wo.grid_kwh.peak})</span></div>
+      <div class="kpi"><b>${(w.solar_to_ev_kwh+(w.solar_to_building_kwh||0)).toFixed(0)} kWh</b><span>rooftop solar used</span></div></div>`;
+  }
+  if (s.samples.length) h += `<canvas id="dchart"></canvas><div class="legend"><span><i style="background:var(--load)"></i>Bought from grid</span><span><i style="background:var(--muted)"></i>Without system</span><span><i style="background:var(--hero-sun)"></i>Rooftop solar</span><span><i style="background:var(--limit)"></i>Site limit</span></div>`;
+  if (m.vehicles){
+    h += s.kind==='depot'
+      ? `<table style="margin-top:12px"><thead><tr><th>Van</th><th>Arrived</th><th>Left</th><th>Needed</th><th>Departure</th><th>Result</th></tr></thead><tbody>${m.vehicles.map(v=>`<tr><td>${esc(v.name)}</td><td>${v.start_soc}%</td><td>${v.end_soc}%</td><td>${v.required_soc}%</td><td>${esc(v.departure)}</td><td>${v.ready?'✓ Ready':'✗ Short'}</td></tr>`).join('')}</tbody></table>`
+      : `<table style="margin-top:12px"><thead><tr><th>Vehicle</th><th>Status</th><th>Battery</th><th>Delivered</th><th>Late</th><th>Handed off</th><th>Reschedule</th></tr></thead><tbody>${m.vehicles.map(v=>`<tr><td>${esc(v.name)}</td><td>${esc(v.status)}</td><td>${v.battery_start}% → ${v.battery_now}%</td><td>${v.delivered}</td><td>${v.late}</td><td>${v.handed_off}</td><td>${v.needs_reschedule}</td></tr>`).join('')}</tbody></table>`;
+  }
+  if (s.brief) h += `<h2 style="margin-top:18px">Brief <span class="tag">(${esc(s.brief.source)})</span></h2><div style="white-space:pre-wrap" class="note">${esc(s.brief.text)}</div>`;
+  if (s.events.length) h += `<details style="margin-top:14px"><summary>${s.kind==='dispatch'?'Agent decisions':'Agent and charger log'} (${s.events.length})</summary><div style="max-height:300px;overflow:auto;font:12px/1.6 ui-monospace,Menlo,monospace">${s.events.map(e=>`<div><b>${e.sim_t==null?'':fmtClock(e.sim_t)}</b> ${esc(e.text)}</div>`).join('')}</div></details>`;
+  if (s.notifications.length) h += `<details style="margin-top:8px"><summary>Customer messages (${s.notifications.length})</summary>${s.notifications.slice(0,50).map(n=>`<div class="msg"><b>${esc(n.customer)}</b> · ${esc(n.vehicle)} · ${esc(n.kind)}<br>${esc(n.message)}</div>`).join('')}${s.notifications.length>50?'<p class="note">First 50 shown — see the Customers page for all.</p>':''}</details>`;
+  $('detail').innerHTML = h;
+  if (s.samples.length) chart(s.samples);
+}
+
+initNav('history').then(() => {
+  if (!API.online) $('rows').innerHTML = '<p class="note">The server is offline. Run <b>python3 server.py</b> and open http://localhost:8000/history.html.</p>';
+  else list();
+});
+</script>
+</body>
+</html>

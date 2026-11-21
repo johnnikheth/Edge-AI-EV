@@ -1,0 +1,25 @@
+﻿# Secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Database (runtime data, not source)
+data.db
+
+# Raw data sets are too large for git (use Git LFS or store separately)
+Raw Data Sets/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp

@@ -1,0 +1,273 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Depot EV — Interview Preparation Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;font-size:14px;line-height:1.6;background:#fff;color:#1f2328;padding:32px 16px 48px}
+.wrapper{max-width:760px;margin:0 auto}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.subtitle{color:#57606a;font-size:13px;margin-bottom:28px}
+h2{font-size:16px;font-weight:700;margin:32px 0 10px;border-bottom:2px solid #3b82d4;padding-bottom:6px;color:#1f2328}
+h3{font-size:13px;font-weight:700;margin:20px 0 6px;color:#3b82d4}
+h4{font-size:13px;font-weight:600;margin:14px 0 4px;color:#1f2328}
+p{margin-bottom:8px;font-size:13px}
+ul,ol{padding-left:20px;margin-bottom:10px}
+li{font-size:13px;margin-bottom:3px}
+table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:12px}
+th{background:#f7f8fa;border:1px solid #e5e7eb;padding:7px 10px;text-align:left;font-weight:600}
+td{border:1px solid #e5e7eb;padding:6px 10px;vertical-align:top}
+.card{background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;padding:14px 16px;margin-bottom:14px}
+.card p{margin-bottom:4px}
+.qa{background:#fff;border-left:3px solid #3b82d4;padding:10px 14px;margin-bottom:12px;border-radius:0 4px 4px 0}
+.qa .q{font-weight:700;color:#1f2328;margin-bottom:6px;font-size:13px}
+.qa .a{font-size:13px;color:#1f2328}
+.badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.green{background:#dcfce7;color:#166534}
+.blue{background:#dbeafe;color:#1e40af}
+.yellow{background:#fef9c3;color:#854d0e}
+.red{background:#fee2e2;color:#991b1b}
+.number-row{display:flex;gap:16px;margin:12px 0;flex-wrap:wrap}
+.number-box{background:#f7f8fa;border:1px solid #e5e7eb;border-radius:6px;padding:12px 16px;flex:1;min-width:140px;text-align:center}
+.number-box .val{font-size:22px;font-weight:700;color:#3b82d4}
+.number-box .lbl{font-size:11px;color:#57606a;margin-top:2px}
+.tip{background:#fef9c3;border:1px solid #fde68a;border-radius:4px;padding:8px 12px;font-size:12px;margin-bottom:10px}
+.tip strong{color:#854d0e}
+code{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:3px;padding:0 4px;font-size:11px;font-family:Consolas,"Courier New",monospace}
+footer{margin-top:40px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center;font-size:12px;color:#57606a}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1>Depot EV — Interview Preparation Guide</h1>
+<p class="subtitle">IBM SkillsBuild AI Experiential Learning Lab · US 2026 Fall Cohort · John Nikheth Chiluvuri (AI &amp; Platform lead)</p>
+
+
+<h2>1. One-Line Pitch (memorise this)</h2>
+<div class="card">
+<p style="font-size:15px;font-style:italic;color:#1f2328">"Eleven cooperating AI agents, led by three command agents, cut a simulated 5-van electric delivery depot's energy bill by 53% — from $4,212 to about $2,000 a month — by avoiding PG&amp;E's 4–9 pm peak price, using rooftop solar and EV storage, and keeping every van ready for its route, with a person approving any risky dispatch change."</p>
+</div>
+
+
+<h2>2. Key Numbers (quote these confidently)</h2>
+<div class="number-row">
+  <div class="number-box"><div class="val">53%</div><div class="lbl">Cost reduction</div></div>
+  <div class="number-box"><div class="val">$4,212</div><div class="lbl">Without system/month</div></div>
+  <div class="number-box"><div class="val">~$2,000</div><div class="lbl">With system/month</div></div>
+  <div class="number-box"><div class="val">0</div><div class="lbl">Breaker trips (was 7)</div></div>
+</div>
+<div class="number-row">
+  <div class="number-box"><div class="val">179→1</div><div class="lbl">Peak kWh/night</div></div>
+  <div class="number-box"><div class="val">5/5</div><div class="lbl">Vans ready, every scenario</div></div>
+  <div class="number-box"><div class="val">11</div><div class="lbl">Agents total</div></div>
+  <div class="number-box"><div class="val">80.35</div><div class="lbl">Bob credits used (of 150)</div></div>
+</div>
+
+
+<h2>3. The Problem (why it matters)</h2>
+<div class="card">
+<p><strong>Four problems costing fleet owners money:</strong></p>
+<ul>
+  <li><strong>Peak-price charging:</strong> Vans return 13:00–14:30 at 15–20% battery. Charging on arrival runs straight through the PG&amp;E peak (4–9 pm, $0.357/kWh — more than twice off-peak).</li>
+  <li><strong>Demand &amp; capacity limits:</strong> 5 × 7.7 kW chargers + 30 kW HVAC = 68 kW on a 50 kW service → 7 breaker trips per night.</li>
+  <li><strong>Wasted rooftop solar:</strong> Solar produces in the afternoon but no one plans charging around it — surplus exported for nothing.</li>
+  <li><strong>Delivery disruption:</strong> Traffic, accidents and breakdowns cause late deliveries. Customers not notified, stops not rebalanced.</li>
+</ul>
+</div>
+
+
+<h2>4. Architecture (the most likely interview topic)</h2>
+
+<h3>4.1 Three-layer stack</h3>
+<table>
+  <thead><tr><th>Layer</th><th>What it is</th><th>Technology</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Frontend</strong></td><td>5 HTML pages (Depot, Dispatch, Customers, History, Architecture)</td><td>Plain HTML/CSS/JavaScript — no framework</td></tr>
+    <tr><td><strong>Backend</strong></td><td>server.py — HTTP server, API, session storage</td><td>Python standard library + SQLite (zero pip deps)</td></tr>
+    <tr><td><strong>Engine</strong></td><td>depot_ev/ Python package — simulation logic</td><td>fleet_simulator.py, gateway_controller.py, watsonx_reporter.py</td></tr>
+  </tbody>
+</table>
+
+<h3>4.2 The 11 agents — know them by command group</h3>
+<table>
+  <thead><tr><th>Command Agent</th><th>Member Agents</th><th>Verdict triggers</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Energy Command</strong></td>
+      <td>Power, Solar &amp; Storage, Tariff, Outage resilience, Demand response</td>
+      <td>ACTION NEEDED: breaker trip or outage with &lt;20% storage<br />WATCH: outage, refilling, &gt;5 kWh at peak</td>
+    </tr>
+    <tr>
+      <td><strong>Fleet Command</strong></td>
+      <td>Fleet planner, Dispatch, Battery health, Charger faults</td>
+      <td>ACTION NEEDED: van short of charge, no safe swap<br />WATCH: swap proposals pending, faults open</td>
+    </tr>
+    <tr>
+      <td><strong>Business Command</strong></td>
+      <td>Customer communications, Reporting</td>
+      <td>ACTION NEEDED: unapproved draft, van departs in &lt;2 hrs<br />WATCH: drafts awaiting approval</td>
+    </tr>
+  </tbody>
+</table>
+<p style="font-size:12px;color:#57606a">The worst of the three command conclusions = the depot verdict (GO / WATCH / ACTION NEEDED).</p>
+
+<h3>4.3 Charging planner — cheapest energy first</h3>
+<ol>
+  <li><strong>Rooftop solar</strong> (free) while the sun is up</li>
+  <li><strong>Stored solar</strong> at peak — treated as already paid for</li>
+  <li><strong>Super off-peak grid</strong> ($0.138/kWh), then <strong>off-peak</strong> ($0.165/kWh)</li>
+  <li><strong>Peak grid</strong> ($0.357/kWh) — only if a van would otherwise miss departure</li>
+</ol>
+<p>Top-ups (above route requirement) use only cheap/free energy — <strong>never at peak, never from storage</strong>.</p>
+
+<h3>4.4 PG&amp;E BEV-1 tariff periods</h3>
+<table>
+  <thead><tr><th>Period</th><th>Hours</th><th>Price/kWh</th></tr></thead>
+  <tbody>
+    <tr><td>Super off-peak</td><td>9 am – 2 pm</td><td>$0.138</td></tr>
+    <tr><td>Off-peak</td><td>9 pm – 9 am and 2–4 pm</td><td>$0.165</td></tr>
+    <tr><td><strong>Peak</strong></td><td><strong>4–9 pm</strong></td><td><strong>$0.357</strong></td></tr>
+    <tr><td>Subscription</td><td>Per 10 kW block/month</td><td>$12.41/block</td></tr>
+  </tbody>
+</table>
+
+<h3>4.5 IBM tools used — know the distinction</h3>
+<table>
+  <thead><tr><th>Tool</th><th>Role</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td><strong>IBM Bob</strong></td><td>AI development partner — built, tested, secured and deployed the solution</td><td>Development only (not in the running app)</td></tr>
+    <tr><td><strong>watsonx Granite</strong> (ibm/granite-3-8b-instruct)</td><td>Generates morning briefs and customer messages</td><td>Runtime — inside the running app</td></tr>
+    <tr><td><strong>watsonx Orchestrate</strong></td><td>Operations agent answering 5 morning questions from saved data</td><td>Runtime — read-only, via OpenAPI tools</td></tr>
+  </tbody>
+</table>
+
+<h3>4.6 Data sources</h3>
+<table>
+  <thead><tr><th>Source</th><th>Used for</th><th>Key</th></tr></thead>
+  <tbody>
+    <tr><td>PG&amp;E BEV-1 tariff sheet</td><td>EV charging prices (built in)</td><td>None</td></tr>
+    <tr><td>NREL PVWatts v8</td><td>Solar production estimate</td><td>NREL_API_KEY</td></tr>
+    <tr><td>Open-Meteo</td><td>Outdoor temperature</td><td>None</td></tr>
+    <tr><td>511 SF Bay</td><td>Live traffic incidents</td><td>SF511_API_KEY</td></tr>
+    <tr><td>OpenEI URDB</td><td>Building electricity tariffs</td><td>OPENEI_API_KEY</td></tr>
+  </tbody>
+</table>
+
+
+<h2>5. Your Specific Work — watsonx Orchestrate Agent</h2>
+<div class="card">
+<p><strong>What you built:</strong> The Depot EV Operations Assistant — a live watsonx Orchestrate agent that answers 5 morning questions using real session data from the running API.</p>
+<ul>
+  <li><strong>5 OpenAPI tools</strong> imported: list_sessions, get_session, list_customer_messages, find_building_tariffs, get_live_traffic</li>
+  <li><strong>BearerAuth</strong> security (DEPOT_TOKEN) — declared in OpenAPI spec, configured as Team credentials in Orchestrate</li>
+  <li><strong>Live tunnel</strong> (ngrok) — server.py exposed over HTTPS so Orchestrate can reach the local API</li>
+  <li><strong>All 5 test Q&amp;As passed</strong> with real session data</li>
+</ul>
+</div>
+
+<h3>5 test questions you can demo</h3>
+<table>
+  <thead><tr><th>Question</th><th>Answer (from live session)</th></tr></thead>
+  <tbody>
+    <tr><td>"Are all vans ready this morning?"</td><td>All 5 vans ready — every vehicle shows ready: true</td></tr>
+    <tr><td>"How much did we save last night?"</td><td>$71.49 nightly / $2,145 monthly savings</td></tr>
+    <tr><td>"How much did we buy at peak?"</td><td>0 kWh — solar + storage covered everything</td></tr>
+    <tr><td>"Which customers were told about delays today?"</td><td>No delay messages sent today</td></tr>
+    <tr><td>"Is there any live traffic near the depot?"</td><td>Not connected — no SF511_API_KEY set</td></tr>
+  </tbody>
+</table>
+
+
+<h2>6. IBM Bob — 6 Tasks You Ran</h2>
+<table>
+  <thead><tr><th>#</th><th>Task</th><th>What Bob did</th><th>Credits</th></tr></thead>
+  <tbody>
+    <tr><td>01</td><td>Python repo</td><td>Ported depot-engine.js → fleet_simulator.py, gateway_controller.py, watsonx_reporter.py</td><td>20.83</td></tr>
+    <tr><td>02</td><td>Automated tests</td><td>16 pytest tests covering 9 rules — all pass in &lt;3 seconds</td><td>14.88</td></tr>
+    <tr><td>03</td><td>Orchestrate agent</td><td>Fixed YAML format, added BearerAuth to OpenAPI spec, imported agent to Orchestrate, ran 5 Q&amp;As</td><td>14.88</td></tr>
+    <tr><td>04</td><td>Security scan</td><td>Manual audit (Semgrep unavailable on Windows), added DEPOT_TOKEN auth to all /api/ endpoints</td><td>8.93</td></tr>
+    <tr><td>05</td><td>Deploy artefacts</td><td>Dockerfile + ibmcloud-deploy.sh for IBM Cloud Code Engine</td><td>14.88</td></tr>
+    <tr><td>06</td><td>README + API docs</td><td>245-line README.md + docs/api.html via Redocly CLI</td><td>5.95</td></tr>
+    <tr><td colspan="3"><strong>Total used / budget</strong></td><td><strong>80.35 / 150</strong></td></tr>
+  </tbody>
+</table>
+
+
+<h2>7. Likely Interview Questions &amp; Answers</h2>
+
+<div class="qa">
+  <div class="q">Q: What problem does Depot EV solve?</div>
+  <div class="a">Electric delivery vans return in the afternoon and charge right through PG&amp;E's expensive 4–9 pm peak at $0.357/kWh — more than twice the off-peak rate. Without a managed system, that costs the depot about $4,200/month and trips the site breaker 7 times a night. Depot EV cuts the bill by 53% to about $2,000/month by planning all charging into cheaper hours, using rooftop solar and EV storage, and controlling the HVAC to keep the site under its limit.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: How does the charging planner work?</div>
+  <div class="a">It's a least-cost scheduler. For each van — in order of earliest departure — it places the energy the route needs into the cheapest available slots: free solar first, then stored solar at peak (treated as already paid for), then super off-peak grid ($0.138), then off-peak ($0.165). Peak grid ($0.357) is used only if a van would otherwise miss its departure. Top-ups above the route requirement never use peak or storage.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is the agent hierarchy?</div>
+  <div class="a">There are 11 agents in three layers. At the bottom: 8 specialist agents each own one decision (Power, Solar &amp; Storage, Tariff, Outage resilience, Demand response, Fleet planner, Dispatch, Battery health, Charger faults, Customer comms, Reporting). Above them: 3 command agents (Energy, Fleet, Business) each supervise their group and reach one GO / WATCH / ACTION NEEDED conclusion. The worst of the three becomes the depot verdict shown on the Agents tab and in the morning brief.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is the role of IBM Bob vs watsonx Granite vs Orchestrate?</div>
+  <div class="a">Bob is the development tool — it built, tested, secured and deployed the solution using 80 credits. It is not part of the running app. Granite is the AI inside the running app — it writes the morning brief and customer messages at runtime. Orchestrate is the operations interface — a read-only agent that answers the depot manager's morning questions using saved session data via 5 OpenAPI tools.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is "human in the loop" in this system?</div>
+  <div class="a">The agents act autonomously on low-risk decisions (rerouting for traffic, HVAC, load balancing) but always pause for a person on higher-risk ones: reassigning delivery stops between vans, rescheduling customers, and approving customer messages before they're sent. The dispatcher clicks Approve or Reject in the app. Every decision is logged for audit. This is enforced in code — the dispatch agent never sends a message or moves a stop without an approval event in the database.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: Why does the system give vans priority over the building for stored energy?</div>
+  <div class="a">An earlier version let the building drain storage at peak when HVAC was forced on. The vans that were planned to charge from storage then had only 12 kW of grid capacity overnight and three missed their routes. Giving vans first claim on stored energy fixed this in every scenario, at a cost of about $7 a night in normal conditions.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What is the PG&amp;E BEV-1 subscription and why does it matter?</div>
+  <div class="a">BEV-1 replaces traditional demand charges with a subscription of $12.41 per 10 kW block per month, based on the peak 15-minute demand. The planner minimises peak demand by spreading charging across hours and vans — keeping the subscription to as few 10 kW blocks as possible. This is one of the hidden savings that smart charging delivers beyond just moving energy out of peak hours.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What happens during a grid outage?</div>
+  <div class="a">Solar and EV storage (including the reserve) automatically power the entire depot — chargers and building — at any hour, peak included. HVAC is shed to extend the runtime. The most urgent vans charge first. When the grid returns, storage recharges from solar plus grid. All 5 vans were still ready in the outage scenario tested.</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What did you personally work on?</div>
+  <div class="a">I was the AI &amp; Platform lead. I set up the watsonx Orchestrate agent — fixed the OpenAPI spec to add BearerAuth security, verified all 4 agent YAMLs were in correct ADK v1 format, ran ngrok to expose the local server over HTTPS, imported the 5 tools and the agent into Orchestrate via the web UI, and ran all 5 test questions successfully with live data. I also managed the Bob credit log and contributed to the IBM Cloud deploy artefacts (Dockerfile and deploy script).</div>
+</div>
+
+<div class="qa">
+  <div class="q">Q: What would you do next if the project continued?</div>
+  <div class="a">Top three: (1) Connect real OCPP chargers and vehicle telematics to replace simulated data with live data. (2) Add seasonal tariffs and multi-utility support for accurate year-round savings. (3) Deploy on IBM Cloud Code Engine with a permanent HTTPS URL so Orchestrate can reach the API without a tunnel — the Dockerfile and deploy script are already written, we just need Docker and a resource-group permission.</div>
+</div>
+
+
+<h2>8. Suggested 2–3 Minute Demo Script</h2>
+<table>
+  <thead><tr><th>Time</th><th>Show</th><th>Say</th></tr></thead>
+  <tbody>
+    <tr><td>0:00–0:30</td><td>Depot page — price timeline</td><td>"Here's the problem: vans return at 1 pm with 15% battery. Without the system they charge right through this $0.357 peak window — $4,200 a month."</td></tr>
+    <tr><td>0:30–1:30</td><td>Run the night — Savings tab</td><td>"With solar and storage, the system buys almost zero peak energy — 1 kWh vs 179. Monthly bill drops to $2,000. Zero breaker trips. All 5 vans ready."</td></tr>
+    <tr><td>1:30–2:15</td><td>Orchestrate chat</td><td>"Now the depot manager asks the AI agent: Are all vans ready? How much did we save? The agent reads our API and answers from real data."</td></tr>
+    <tr><td>2:15–2:30</td><td>Bob session / code</td><td>"Everything here was built with IBM Bob — 6 tasks, 80 credits of 150. Bob wrote the Python engine, the tests, security hardening and this deploy."</td></tr>
+  </tbody>
+</table>
+
+
+<h2>9. Quick Tips</h2>
+<div class="tip"><strong>Always say "simulated"</strong> — the system uses real prices and data sources but chargers, vans and solar are simulated. Never claim it's a live hardware pilot.</div>
+<div class="tip"><strong>Know the three IBM tools and their roles:</strong> Bob builds, Granite runs in the app, Orchestrate is the operations interface.</div>
+<div class="tip"><strong>The 53% saving headline</strong> = $2,214/month saved. The biggest chunk is smart charging alone ($1,300) — no new equipment needed.</div>
+<div class="tip"><strong>Your personal contribution</strong> = Orchestrate agent live with 5/5 test Q&amp;As, deploy artefacts, credit log, BearerAuth security in the OpenAPI spec.</div>
+
+</div>
+<footer>Made with IBM Bob</footer>
+</body>
+</html>

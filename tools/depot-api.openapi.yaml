@@ -1,0 +1,329 @@
+openapi: "3.0.3"
+info:
+  title: Depot EV API
+  version: "1.0.0"
+  description: >
+    Read-only tools for the Depot EV operations agent (watsonx Orchestrate). Exposes saved depot nights,
+    delivery days, customer messages, tariffs and live traffic from server.py. The agent never changes
+    data; a person makes every operational decision in the app.
+servers:
+  # For local tunnel testing (Bob 03): replace with your ngrok/localtunnel HTTPS URL.
+  # For production (Bob 05): replace with the IBM Cloud Code Engine HTTPS URL.
+  # Steps:
+  #   1. Start the server:   python server.py 8000
+  #   2. Start the tunnel:   npx localtunnel --port 8000
+  #      or:                 ngrok http 8000
+  #   3. Copy the HTTPS URL printed by the tunnel and paste it below.
+  #   4. After Bob 05 deploy, replace with the Code Engine URL and re-import tools.
+  - url: https://bagginess-satisfied-pregame.ngrok-free.dev
+    description: Depot EV server (ngrok tunnel — replace with Code Engine URL after Bob 05 deploy)
+security:
+  - BearerAuth: []
+# Note: when DEPOT_TOKEN is not set in .env the server runs open (localhost dev only).
+# When it IS set every /api/ call must include:  Authorization: Bearer <your-token>
+# Orchestrate passes the token automatically once you configure it as a credential.
+paths:
+  /api/sessions:
+    get:
+      operationId: list_sessions
+      summary: List saved depot nights and delivery days
+      description: >
+        Newest first. kind is "depot" (overnight charging) or "dispatch" (delivery day).
+        meta holds the end-of-run summary including vehicle readiness and cost breakdown.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+      responses:
+        "200":
+          description: Sessions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionSummary"
+  /api/sessions/{id}:
+    get:
+      operationId: get_session
+      summary: Full detail of one depot night or delivery day
+      description: >
+        Includes meta (costs with and without the system, vehicles ready, HVAC, approvals),
+        the watsonx brief, agent decisions (events), power samples, and customer messages.
+        Use it to answer "were all vans ready?", "how much did we save?" or "what did the agent decide?".
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionDetail"
+        "404":
+          description: No such session
+  /api/notifications:
+    get:
+      operationId: list_customer_messages
+      summary: Customer messages sent by the dispatch agent
+      description: >
+        kind is "delay", "reassigned" or "reschedule". Newest first.
+        These are messages drafted or sent by the dispatch agent for customers of affected vans.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 300
+            maximum: 1000
+        - name: after
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Return only messages with id greater than this value (for polling)
+      responses:
+        "200":
+          description: Customer messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+  /api/tariffs:
+    get:
+      operationId: find_building_tariffs
+      summary: Commercial electricity tariffs near the depot (OpenEI Utility Rate Database)
+      description: >
+        Returns commercial tariffs near the depot location. The applies field is true when
+        the tariff's kW range covers the site's peak demand.
+      parameters:
+        - name: lat
+          in: query
+          required: false
+          schema:
+            type: number
+            default: 37.751
+          description: Latitude (default is Oakland depot)
+        - name: lon
+          in: query
+          required: false
+          schema:
+            type: number
+            default: -122.199
+          description: Longitude (default is Oakland depot)
+        - name: kw
+          in: query
+          required: false
+          schema:
+            type: number
+            default: 50
+          description: Site peak demand kW — used to flag which tariffs apply
+      responses:
+        "200":
+          description: Tariff list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  source:
+                    type: string
+                    example: OpenEI Utility Rate Database
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        utility:
+                          type: string
+                        name:
+                          type: string
+                        facility_demand_per_kw:
+                          type: number
+                        tou_demand_per_kw:
+                          type: number
+                        energy_min_per_kwh:
+                          type: number
+                        energy_max_per_kwh:
+                          type: number
+                        applies:
+                          type: boolean
+                        uri:
+                          type: string
+  /api/incidents:
+    get:
+      operationId: get_live_traffic
+      summary: Active traffic incidents near the depot from 511 SF Bay
+      description: >
+        Returns live traffic incidents from 511 SF Bay. configured is false when the server
+        has no SF511_API_KEY set — tell the user live traffic is not connected in that case.
+      responses:
+        "200":
+          description: Traffic incidents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configured:
+                    type: boolean
+                    description: false when SF511_API_KEY is not set on the server
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        headline:
+                          type: string
+                        type:
+                          type: string
+                        severity:
+                          type: string
+                        lat:
+                          type: number
+                        lon:
+                          type: number
+                        roads:
+                          type: string
+                        updated:
+                          type: string
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: >
+        Set DEPOT_TOKEN in .env on the server. Configure the same value as a credential
+        in watsonx Orchestrate (Connections → Add connection → API key / Bearer token)
+        so Orchestrate passes it automatically on every tool call.
+  schemas:
+    SessionSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+          enum: [depot, dispatch]
+        started_at:
+          type: number
+          description: Unix timestamp (seconds)
+        ended_at:
+          type: number
+          nullable: true
+          description: Unix timestamp when the session ended; null if still running
+        meta:
+          type: object
+          additionalProperties: true
+          description: >
+            End-of-run summary. For depot nights includes:
+            vehicles (array of {name, soc, need, ready}),
+            costs.with_system and costs.without_system (nightly_usd, monthly_usd, grid_kwh.peak, etc.),
+            costs.monthly_savings_usd.
+        n_samples:
+          type: integer
+          description: Number of power-sample records stored
+        n_events:
+          type: integer
+          description: Number of agent event records stored
+        n_notifs:
+          type: integer
+          description: Number of customer notification records stored
+        has_brief:
+          type: boolean
+          description: true when a watsonx Granite brief has been saved for this session
+    SessionDetail:
+      allOf:
+        - $ref: "#/components/schemas/SessionSummary"
+        - type: object
+          properties:
+            brief:
+              type: object
+              nullable: true
+              description: watsonx Granite morning brief, or null if not yet generated
+              properties:
+                text:
+                  type: string
+                source:
+                  type: string
+                  example: watsonx-granite
+            events:
+              type: array
+              description: Chronological agent decisions and gateway log entries
+              items:
+                type: object
+                properties:
+                  sim_t:
+                    type: number
+                    description: Simulated time in minutes since midnight
+                  source:
+                    type: string
+                    description: agent | gateway | planner | comms | solar | resilience | health | demand | fault
+                  type:
+                    type: string
+                  text:
+                    type: string
+            notifications:
+              type: array
+              description: Customer messages generated during this session
+              items:
+                $ref: "#/components/schemas/Notification"
+            samples:
+              type: array
+              description: Per-step power readings (every 5 simulated minutes)
+              items:
+                type: object
+                properties:
+                  t:
+                    type: number
+                    description: Simulated minutes since midnight
+                  bldg:
+                    type: number
+                    description: Building load kW
+                  ch_kw:
+                    type: number
+                    description: EV charging kW
+                  grid_kw:
+                    type: number
+                    description: Grid import kW
+                  solar_kw:
+                    type: number
+                    description: Solar production kW
+                  batt_pct:
+                    type: number
+                    description: Battery state of charge %
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        session_id:
+          type: integer
+        vehicle:
+          type: string
+        customer:
+          type: string
+        stop_id:
+          type: string
+        kind:
+          type: string
+          enum: [delay, reassigned, reschedule]
+        message:
+          type: string
+        eta:
+          type: string
+          nullable: true

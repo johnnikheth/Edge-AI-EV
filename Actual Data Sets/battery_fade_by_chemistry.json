@@ -1,0 +1,163 @@
+{
+  "LFP": {
+    "fade_pct_per_1000_cycles": 6.282,
+    "cycles_to_80pct_soh": 3184,
+    "n": 13309,
+    "fast_charge": {
+      "high (>0.5)": {
+        "fade_pct_per_1000_cycles": 6.704,
+        "multiplier": 1.067,
+        "n": 1546
+      },
+      "low (<0.2)": {
+        "fade_pct_per_1000_cycles": 6.106,
+        "multiplier": 0.972,
+        "n": 4361
+      },
+      "mid (0.2-0.5)": {
+        "fade_pct_per_1000_cycles": 6.295,
+        "multiplier": 1.002,
+        "n": 6483
+      }
+    },
+    "depth_of_discharge": {
+      "deep (>80%)": {
+        "fade_pct_per_1000_cycles": 6.477,
+        "multiplier": 1.031,
+        "n": 2102
+      },
+      "medium (50-80%)": {
+        "fade_pct_per_1000_cycles": 6.237,
+        "multiplier": 0.993,
+        "n": 8127
+      },
+      "shallow (<50%)": {
+        "fade_pct_per_1000_cycles": 6.265,
+        "multiplier": 0.997,
+        "n": 2298
+      }
+    }
+  },
+  "LMO": {
+    "fade_pct_per_1000_cycles": 16.856,
+    "cycles_to_80pct_soh": 1187,
+    "n": 6555,
+    "fast_charge": {
+      "high (>0.5)": {
+        "fade_pct_per_1000_cycles": 17.047,
+        "multiplier": 1.011,
+        "n": 764
+      },
+      "low (<0.2)": {
+        "fade_pct_per_1000_cycles": 17.192,
+        "multiplier": 1.02,
+        "n": 2213
+      },
+      "mid (0.2-0.5)": {
+        "fade_pct_per_1000_cycles": 16.632,
+        "multiplier": 0.987,
+        "n": 3163
+      }
+    },
+    "depth_of_discharge": {
+      "deep (>80%)": {
+        "fade_pct_per_1000_cycles": 18.337,
+        "multiplier": 1.088,
+        "n": 1171
+      },
+      "medium (50-80%)": {
+        "fade_pct_per_1000_cycles": 16.979,
+        "multiplier": 1.007,
+        "n": 4188
+      },
+      "shallow (<50%)": {
+        "fade_pct_per_1000_cycles": 15.367,
+        "multiplier": 0.912,
+        "n": 851
+      }
+    }
+  },
+  "NCA": {
+    "fade_pct_per_1000_cycles": 12.937,
+    "cycles_to_80pct_soh": 1546,
+    "n": 9301,
+    "fast_charge": {
+      "high (>0.5)": {
+        "fade_pct_per_1000_cycles": 13.867,
+        "multiplier": 1.072,
+        "n": 1241
+      },
+      "low (<0.2)": {
+        "fade_pct_per_1000_cycles": 12.326,
+        "multiplier": 0.953,
+        "n": 2682
+      },
+      "mid (0.2-0.5)": {
+        "fade_pct_per_1000_cycles": 13.096,
+        "multiplier": 1.012,
+        "n": 4780
+      }
+    },
+    "depth_of_discharge": {
+      "deep (>80%)": {
+        "fade_pct_per_1000_cycles": 13.721,
+        "multiplier": 1.061,
+        "n": 1421
+      },
+      "medium (50-80%)": {
+        "fade_pct_per_1000_cycles": 12.942,
+        "multiplier": 1.0,
+        "n": 5848
+      },
+      "shallow (<50%)": {
+        "fade_pct_per_1000_cycles": 12.268,
+        "multiplier": 0.948,
+        "n": 1468
+      }
+    }
+  },
+  "NMC": {
+    "fade_pct_per_1000_cycles": 11.86,
+    "cycles_to_80pct_soh": 1686,
+    "n": 15256,
+    "fast_charge": {
+      "high (>0.5)": {
+        "fade_pct_per_1000_cycles": 12.86,
+        "multiplier": 1.084,
+        "n": 1867
+      },
+      "low (<0.2)": {
+        "fade_pct_per_1000_cycles": 11.248,
+        "multiplier": 0.948,
+        "n": 4632
+      },
+      "mid (0.2-0.5)": {
+        "fade_pct_per_1000_cycles": 12.068,
+        "multiplier": 1.018,
+        "n": 7660
+      }
+    },
+    "depth_of_discharge": {
+      "deep (>80%)": {
+        "fade_pct_per_1000_cycles": 12.896,
+        "multiplier": 1.087,
+        "n": 2503
+      },
+      "medium (50-80%)": {
+        "fade_pct_per_1000_cycles": 11.807,
+        "multiplier": 0.995,
+        "n": 9294
+      },
+      "shallow (<50%)": {
+        "fade_pct_per_1000_cycles": 11.137,
+        "multiplier": 0.939,
+        "n": 2607
+      }
+    }
+  },
+  "_meta": {
+    "source": "ev_battery_health.csv (synthetic, CC0)",
+    "model": "fade% = rate x cycles, fitted through the origin",
+    "note": "Simulated degradation model. Do not use for real warranty or safety decisions."
+  }
+}

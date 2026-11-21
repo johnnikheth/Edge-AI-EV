@@ -1,0 +1,47 @@
+# .dockerignore — files excluded from the Docker build context
+# Keep the image small and ensure no secrets or dev files are baked in.
+
+# Secrets — NEVER bake into the image
+.env
+*.env
+
+# Runtime data — provided via persistent volume at runtime
+data.db
+
+# Python dev artefacts
+__pycache__/
+*.py[cod]
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Dev / editor
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Tests and docs (not needed in the running image)
+tests/
+depot_ev/
+docs/bob-tasks/
+bob_sessions/
+agents/
+tools/
+
+# Data sets
+Data Sets/
+Actual Data Sets/
+
+# Node / npm (only needed for local dev tooling)
+node_modules/
+package-lock.json

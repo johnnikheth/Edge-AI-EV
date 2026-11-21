@@ -1,0 +1,170 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IBM Fall ELL — Depot EV Gap Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; background: #ffffff; color: #1f2328; padding: 32px 16px 48px; }
+  .wrapper { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #57606a; font-size: 13px; margin-bottom: 28px; }
+  h2 { font-size: 15px; font-weight: 700; margin: 28px 0 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+  h3 { font-size: 13px; font-weight: 600; margin: 16px 0 6px; color: #3b82d4; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 13px; }
+  th { background: #f7f8fa; border: 1px solid #e5e7eb; padding: 7px 10px; text-align: left; font-weight: 600; color: #1f2328; }
+  td { border: 1px solid #e5e7eb; padding: 6px 10px; vertical-align: top; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .done   { background: #dcfce7; color: #166534; }
+  .partial{ background: #fef9c3; color: #854d0e; }
+  .gap    { background: #fee2e2; color: #991b1b; }
+  .warn   { background: #fef3c7; color: #92400e; }
+  ul { padding-left: 18px; }
+  li { margin-bottom: 4px; font-size: 13px; }
+  .section-box { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 14px 16px; margin-bottom: 16px; }
+  .section-box p { font-size: 13px; margin-bottom: 6px; }
+  .deadline { font-weight: 700; color: #991b1b; }
+  .credit-note { font-size: 12px; color: #57606a; margin-top: 4px; }
+  footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 12px; color: #57606a; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <h1>Depot EV — IBM Fall ELL Gap Report</h1>
+  <p class="subtitle">IBM SkillsBuild AI Experiential Learning Lab · US 2026 Fall Cohort · Assessed 2026-11-16 · <span class="deadline">Submission deadline: Nov 20 (hard cutoff Nov 22)</span></p>
+
+  <h2>Overall Status</h2>
+  <div class="section-box">
+    <p>Tasks 01–03 were completed on 2026-11-04. Tasks 04–06 have <strong>not been started</strong> and no session reports exist for them. The server is running locally but is not deployed to IBM Cloud, the OpenAPI spec still points to a placeholder URL, and the repository has no <code>README.md</code> or <code>Dockerfile</code>. <strong>4–6 days remain before the submission deadline.</strong></p>
+  </div>
+
+  <h2>Bob Task Status</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Task</th><th>Owner</th><th>Deadline (plan)</th><th>Status</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>01</td>
+        <td>Python repository (<code>depot_ev/</code> package)</td>
+        <td>Engine lead</td>
+        <td>Oct 19–25</td>
+        <td><span class="badge done">DONE</span></td>
+        <td>All 5 files present; run_night validates ✓</td>
+      </tr>
+      <tr>
+        <td>02</td>
+        <td>Automated pytest tests (16 tests, 9 rules)</td>
+        <td>Engine lead</td>
+        <td>Oct 26–Nov 1</td>
+        <td><span class="badge done">DONE</span></td>
+        <td><code>tests/test_depot_ev.py</code> — 16 passed ✓</td>
+      </tr>
+      <tr>
+        <td>03</td>
+        <td>watsonx Orchestrate agent YAML</td>
+        <td>AI &amp; Platform lead</td>
+        <td>Oct 26–Nov 1</td>
+        <td><span class="badge partial">PARTIAL</span></td>
+        <td>Files created; <strong>blocked</strong> — OpenAPI <code>servers.url</code> is still placeholder <code>YOUR-DEPLOYED-DEPOT-EV-URL</code>; agent cannot be imported into Orchestrate until Task 05 is done</td>
+      </tr>
+      <tr>
+        <td>04</td>
+        <td>Security scan &amp; fixes (Semgrep + sign-in)</td>
+        <td>Engine lead</td>
+        <td>Nov 2–8</td>
+        <td><span class="badge gap">NOT STARTED</span></td>
+        <td>No session report at <code>bob_sessions/04-security/</code>; <code>DEPOT_TOKEN</code> not set in any <code>.env</code></td>
+      </tr>
+      <tr>
+        <td>05</td>
+        <td>Deploy to IBM Cloud Code Engine (Dockerfile + HTTPS URL)</td>
+        <td>AI &amp; Platform lead</td>
+        <td>Nov 2–8</td>
+        <td><span class="badge gap">NOT STARTED</span></td>
+        <td>No <code>Dockerfile</code> found anywhere in the repo; no session report at <code>bob_sessions/05-deploy/</code></td>
+      </tr>
+      <tr>
+        <td>06</td>
+        <td>README and API docs</td>
+        <td>Product &amp; Delivery lead</td>
+        <td>Nov 9–15</td>
+        <td><span class="badge gap">NOT STARTED</span></td>
+        <td>No root-level <code>README.md</code> exists; no session report at <code>bob_sessions/06-docs/</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>What Still Needs to Be Done</h2>
+
+  <h3>1 — Security hardening (Bob Task 04 · 15 credits · Engine lead)</h3>
+  <ul>
+    <li>Run Semgrep on <code>server.py</code>, <code>common.js</code>, <code>depot-engine.js</code>, and all HTML pages; fix or document findings.</li>
+    <li>Set <code>DEPOT_TOKEN</code> in <code>.env</code> — the server currently runs open (unauthenticated) on every API endpoint.</li>
+    <li>Verify API keys (<code>WATSONX_API_KEY</code>, <code>SF511_API_KEY</code>, <code>NREL_API_KEY</code>, <code>OPENEI_API_KEY</code>) are never echoed to the browser or written to logs.</li>
+    <li>Escape all user-visible text to prevent XSS.</li>
+    <li>Export session report to <code>bob_sessions/04-security/</code> and log credits in <code>credit-log.md</code>.</li>
+  </ul>
+
+  <h3>2 — IBM Cloud deployment (Bob Task 05 · 25 credits · AI &amp; Platform lead)</h3>
+  <ul>
+    <li>Write a <code>Dockerfile</code> for <code>server.py</code>.</li>
+    <li>Configure persistent storage for <code>data.db</code> on Code Engine (IBM Cloud Object Storage or a persistent volume).</li>
+    <li>Inject API keys as Code Engine secrets (not baked into the image).</li>
+    <li>Obtain the public HTTPS URL and update <code>tools/depot-api.openapi.yaml</code> <code>servers[0].url</code>.</li>
+    <li>Unblock Task 03: once the URL is live, import the Orchestrate agent via <code>agents/orchestrate-setup.sh</code> and run the five test questions.</li>
+    <li>Export session report to <code>bob_sessions/05-deploy/</code> and log credits.</li>
+  </ul>
+
+  <h3>3 — README and API docs (Bob Task 06 · 10 credits · Product &amp; Delivery lead)</h3>
+  <ul>
+    <li>Create root-level <code>README.md</code> covering: problem statement, solution architecture, local run instructions, IBM Cloud deploy, all environment variables, Orchestrate agent setup, how to run <code>pytest</code>, and IBM tools used (Bob / Granite / Orchestrate).</li>
+    <li>Generate API reference from <code>tools/depot-api.openapi.yaml</code>.</li>
+    <li>Export session report to <code>bob_sessions/06-docs/</code> and log credits.</li>
+  </ul>
+
+  <h3>4 — Credit log (all leads)</h3>
+  <ul>
+    <li><code>docs/bob-tasks/credit-log.md</code> shows all <em>Credits used</em> fields as <strong>TBD</strong> — fill in actual values from the Bob session credit counter for Tasks 01–03 before submission.</li>
+    <li>Fill in credits used for Tasks 04–06 as each session completes.</li>
+    <li>Total budget is 150 credits; 15 are reserved. Ensure the final tally stays within budget.</li>
+  </ul>
+
+  <h3>5 — Active server errors (runtime fixes)</h3>
+  <ul>
+    <li><code>GET /api/solar</code> → <strong>502</strong>: NREL PVWatts is timing out (rate-limited <code>DEMO_KEY</code> or network block). Set <code>NREL_API_KEY</code> in <code>.env</code>.</li>
+    <li><code>GET /api/weather</code> → <strong>502 / SSL timeout</strong>: Open-Meteo TLS handshake is timing out — likely a corporate proxy. Set <code>SSL_CERT_FILE</code> in <code>.env</code> to the system CA bundle, or allowlist <code>api.open-meteo.com</code>.</li>
+    <li><code>GET /favicon.ico</code> → <strong>404</strong>: Minor; add a <code>favicon.ico</code> to the repo root to suppress the 404.</li>
+  </ul>
+
+  <h3>6 — Submission checklist (Product &amp; Delivery lead)</h3>
+  <ul>
+    <li>Confirm cohort theme in the lab portal (noted as "to confirm" in <code>TEAM_PLAN.md</code> — verify it is recorded).</li>
+    <li>Fill in the three team member names in <code>docs/TEAM_PLAN.md</code> (all show <code>[Name]</code>).</li>
+    <li>Record the 2–3 minute demo video.</li>
+    <li>Verify/update <code>docs/Depot-EV-Solution.pdf</code> to reflect any changes made in Weeks 3–5.</li>
+    <li>Submit by <strong>Nov 20</strong> (hard cutoff Nov 22, results Dec 10).</li>
+  </ul>
+
+  <h2>Priority Order for the Remaining Days</h2>
+  <table>
+    <thead>
+      <tr><th>Day</th><th>Action</th><th>Owner</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Today (Nov 16)</td><td>Bob Task 04 — security scan &amp; <code>DEPOT_TOKEN</code> sign-in</td><td>Engine lead</td></tr>
+      <tr><td>Nov 17</td><td>Bob Task 05 — Dockerfile + IBM Cloud Code Engine deploy</td><td>AI &amp; Platform lead</td></tr>
+      <tr><td>Nov 17</td><td>Unblock Task 03 — set OpenAPI URL, import Orchestrate agent, run 5 test Q&amp;As</td><td>AI &amp; Platform lead</td></tr>
+      <tr><td>Nov 18</td><td>Bob Task 06 — README + API docs; fix SSL/NREL keys in <code>.env</code></td><td>Product &amp; Delivery lead</td></tr>
+      <tr><td>Nov 18–19</td><td>Fill in credit log; fill in team names; final PDF / video check</td><td>All</td></tr>
+      <tr><td>Nov 20</td><td><strong>Submit</strong></td><td>Product &amp; Delivery lead</td></tr>
+    </tbody>
+  </table>
+
+</div>
+<footer>Made with IBM Bob</footer>
+
+</body>
+</html>

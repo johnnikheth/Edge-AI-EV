@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispatch Agent</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+.card{margin-bottom:0}
+.stack{display:grid;gap:18px;margin-bottom:18px}
+.dots i.resched{background:var(--limit)}
+#map{height:clamp(320px,62vh,640px);border-radius:10px;border:1px solid var(--line)}
+#approval{border:2px solid var(--warn);display:none}
+#approval h2{color:var(--warn)}
+#approval table{margin:8px 0}
+.vdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.vlabel{background:var(--card);border:2px solid;border-radius:6px;padding:1px 5px;font:600 11px system-ui;white-space:nowrap;color:var(--ink)}
+.veh{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.veh:last-child{border-bottom:none}
+.veh small{color:var(--muted)}
+.bbar{position:relative;height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin:3px 0}
+.bbar i{position:absolute;left:0;top:0;bottom:0;background:var(--ok);border-radius:5px}
+.bbar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--limit)}
+#alog{max-height:460px;overflow:auto}
+.dec{border-left:3px solid var(--load);padding:6px 10px;margin-bottom:8px;font-size:13px}
+.dec.warn{border-color:var(--warn)} .dec.bad{border-color:var(--limit)}
+.dec small{color:var(--muted);display:block}
+.inc{font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+.evbtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}
+.evbtns button{padding:14px;text-align:left}
+.evbtns button b{display:block;font-size:15px}
+.evbtns button span{font-size:12px;color:var(--muted)}
+button:disabled{opacity:.5;cursor:not-allowed}
+</style>
+</head>
+<body>
+<div class="wrap wide">
+
+  <section class="herobox">
+    <div class="bg" id="heroBg"></div>
+    <div class="shade"></div>
+    <div class="content">
+      <div>
+        <h1>Today's deliveries</h1>
+        <div id="status">Loading…</div>
+        <div class="actions">
+          <button class="primary big" id="start">▶ Start the day</button>
+          <button id="demo">🎬 Run demo scenario</button>
+          <button id="reset">Reset</button>
+          <select id="speed" title="Simulation speed"><option value="2">Slow</option><option value="5" selected>Normal</option><option value="10">Fast</option></select>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="glass">
+        <div class="kpi good"><b id="kDel">0</b><span id="kDelL">Stops delivered</span></div>
+        <div class="kpi"><b id="kLate">0</b><span>Delivered late</span></div>
+        <div class="kpi"><b id="kNotif">0</b><span>Customers notified</span></div>
+        <div class="kpi"><b id="kClock">04:30</b><span id="kClockL">Simulated time</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stack">
+    <div class="card" id="approval">
+      <h2>Your approval is needed</h2>
+      <div><b id="apTitle"></b></div>
+      <div id="apBody"></div>
+      <div class="actions"><button class="primary big" id="apYes">Approve</button><button id="apNo">Reject</button>
+        <span class="note">The day is paused until you decide.</span></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <h2>Live routes</h2>
+      <div id="map"></div>
+      <div class="legend">
+        <span><i style="background:#fff;border:2px solid var(--muted)"></i>Stop to deliver</span><span><i style="background:var(--ok)"></i>Delivered</span>
+        <span><i style="background:var(--warn)"></i>Late</span><span><i style="background:var(--limit)"></i>Needs reschedule</span>
+        <span><i style="background:#d92d20;border-radius:50%"></i>Live incident (511)</span><span>Dashed line = rerouted</span>
+      </div>
+      <p class="note">Stops are simulated around the Corporate Office near Oakland, CA. Lines join stops in order; they are not road-snapped.</p>
+    </div>
+    <div class="card">
+      <h2>Vehicles</h2>
+      <div id="vehs"></div>
+      <p class="note" style="margin-top:8px">Bar = battery; red tick = 10% safety floor. Squares = stops (green delivered, orange late, blue handed to another van, red reschedule).</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tabs" role="tablist">
+      <button data-tab="decisions" class="active">Agent decisions</button>
+      <button data-tab="events">What could go wrong?</button>
+      <button data-tab="fleet">Fleet table</button>
+      <button data-tab="brief">Daily brief</button>
+    </div>
+
+    <div class="panel" id="tab-decisions">
+      <div id="alog"><span class="note">No decisions yet. Start the day, then inject a delay or run the demo scenario.</span></div>
+    </div>
+
+    <div class="panel" id="tab-events" hidden>
+      <div class="main" style="margin:0">
+        <div>
+          <h2>Try an event</h2>
+          <div class="controls"><label>Which vehicle?<select id="veh"></select></label></div>
+          <div class="evbtns">
+            <button id="traffic"><b>🚗 Heavy traffic</b><span>Agent decides: wait (+15 min) or reroute (+8 min, uses more battery)</span></button>
+            <button id="accident"><b>⚠ Accident</b><span>Road closed: wait (+35 min) or reroute (+12 min)</span></button>
+            <button id="breakdown"><b>🛠 Breakdown</b><span>Vehicle stops; agent proposes who takes its stops — you approve</span></button>
+          </div>
+          <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="needApproval" checked> Ask me before reassigning stops or rescheduling customers</label>
+        </div>
+        <div>
+          <h2>Live traffic <span class="tag">(511 SF Bay)</span></h2>
+          <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="live" checked> Let live incidents near a route delay that vehicle</label>
+          <div id="incs" class="note" style="margin-top:8px">Checking…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="tab-fleet" hidden>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Vehicle</th><th>Status</th><th>Battery</th><th>Stops left</th><th>Packages left</th><th>ETA vs plan</th><th>Stops</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="note" id="linkTxt"></p>
+    </div>
+
+    <div class="panel" id="tab-brief" hidden>
+      <div id="brief" class="note" style="white-space:pre-wrap">Generated when all vehicles are back, or press the button.</div>
+      <button id="gen" style="margin-top:8px">Generate brief now</button>
+      <p class="note">Customer messages are on the <a href="customers.html">Customers</a> page. Past days are on <a href="history.html">History</a>.</p>
+    </div>
+  </div>
+</div>
+
+<script src="common.js"></script>
+<script>
+const GAP = 20, WIN = 30, RET_MIN = 20, CUTOFF = 14*60; // minutes; all stops should be done by 14:00
+const START = Math.min(...FLEET.map(f=>f.dep%1440));
+const $ = id => document.getElementById(id);
+const NAMES = ['Avery','Jordan','Sam','Riley','Casey','Morgan','Taylor','Quinn','Drew','Jamie','Parker','Rowan',
+               'Alex','Blake','Cameron','Dakota','Emerson','Finley','Hayden','Jesse','Kendall','Logan','Micah','Reese'];
+// wait = delay if the vehicle waits it out; reroute = delay and extra battery used on the alternate path.
+const EVENTS = {
+  traffic:  {label:'heavy traffic', wait:15, reroute:8,  drain:2},
+  accident: {label:'an accident and road closure', wait:35, reroute:12, drain:3},
+};
+const DEMO = [{at:6*60+30, kind:'accident', idx:1}, {at:7*60, kind:'traffic', idx:2}, {at:8*60, kind:'breakdown', idx:0}];
+window.addEventListener('resize', () => { if (MAP) MAP.invalidateSize(); });
+let S = null, timer = null, DEPOT_RES = null, INC = {configured:false, events:[]}, MAP = null, LAYER = null, TAB = 'decisions';
+
+function mk(f, idx, res){
+  const need = needOf(f), r = res && res.vehicles && res.vehicles.find(x=>x.name===f.name);
+  const soc = r ? +r.end_soc : need, pts = routePoints(f, idx), depart = f.dep % 1440;
+  const v = {name:f.name, idx, need, soc, soc0:soc, drain:f.drain, ret:f.ret, depart, color:VCOLORS[idx%VCOLORS.length],
+    status:'Loading', work:0, delay:0, note:'', returnLeft:0, rerouted:false, lastLL:[DEPOT.lat,DEPOT.lon], stops:[]};
+  const base = Math.floor(f.pk/f.stops), rem = f.pk - base*f.stops;
+  for (let i=0;i<f.stops;i++){
+    const planned = depart + (i+1)*GAP;
+    v.stops.push({id:`${f.name.replace(' ','')}-${i+1}`, customer:NAMES[(i+idx*5)%NAMES.length], pk:base+(i<rem?1:0),
+      planned, win:planned+WIN, status:'pending', from:null, ll:pts[i]});
+  }
+  return v;
+}
+async function init(){
+  stop();
+  DEPOT_RES = await latestDepotResult();
+  S = {t:START, cars:FLEET.map((f,i)=>mk(f,i,DEPOT_RES)), alog:[], notifs:0, demo:[], done:false, sidP:null,
+       pending:[], approvals:[], resume:false};
+  $('alog').innerHTML = '<span class="note">No decisions yet. Start the day, then inject a delay or run the demo scenario.</span>';
+  $('brief').textContent = 'Generated when all vehicles are back, or press the button.';
+  $('veh').innerHTML = S.cars.map((v,i)=>`<option value="${i}">${v.name}</option>`).join('');
+  $('approval').style.display = 'none'; $('start').disabled = false; $('start').textContent = '▶ Start the day';
+  render();
+}
+
+const pending = v => v.stops.filter(s=>s.status==='pending');
+const offset = v => v.status==='Loading' ? Math.max(0, v.depart-S.t) : 0;
+const etaOf = (v,j) => S.t + offset(v) + v.delay - v.work + (j+1)*GAP;
+function project(v, pend, extraDelay, extraDrain){
+  const base = S.t + offset(v) + v.delay + extraDelay - v.work;
+  let late = 0; pend.forEach((s,j)=>{ if (base+(j+1)*GAP > s.win) late++; });
+  return {late, batt:v.soc - pend.length*v.drain - v.ret - extraDrain, finish:base + pend.length*GAP + RET_MIN};
+}
+
+// ---- persistence ----
+function sessionId(){
+  if (!API.online) return Promise.resolve(null);
+  if (!S.sidP) S.sidP = API.j('POST','/api/sessions',{kind:'dispatch',meta:{start_from:DEPOT_RES?(DEPOT_RES.id!=null?'depot session #'+DEPOT_RES.id:'depot run (browser)'):'plan'}}).then(r=>r.id).catch(()=>null);
+  return S.sidP;
+}
+async function record(type, text){
+  const id = await sessionId(); if (id==null) return;
+  API.j('POST',`/api/sessions/${id}/events`,{ts:S.t, source:'agent', type, text}).catch(()=>{});
+}
+
+// ---- agent log + customer messages ----
+function agent(text, type='decision', cls=''){
+  const first = S.alog.length===0; S.alog.unshift({t:S.t, text, cls});
+  if (first) $('alog').innerHTML = '';
+  const d = document.createElement('div'); d.className = 'dec '+cls;
+  d.innerHTML = `<small>${fmtClock(S.t)}</small>${text}`; $('alog').prepend(d);
+  record(type, text.replace(/<br>/g,' | ').replace(/<[^>]+>/g,''));
+}
+async function msgTemplate(kind, ctx){
+  const fallback = {
+    delay: `Hi {name}, your delivery of {items} is running about ${ctx.mins} min late because of ${ctx.reason}. New ETA is {eta}. Thanks for your patience.`,
+    reassigned: `Hi {name}, we've moved your delivery of {items} to ${ctx.donor} so it still arrives today. New ETA is {eta}.`,
+    reschedule: `Hi {name}, we can't deliver your {items} today because of ${ctx.reason}. Reply 1 to reschedule for tomorrow morning, or 2 for the next available slot. Sorry about this.`,
+  }[kind];
+  if (!API.config.granite) return fallback;
+  try {
+    const r = await API.j('POST','/api/granite',{prompt:`Rewrite this customer delivery message in a friendly, concise tone (max 2 sentences). Keep the placeholders {name}, {items} and {eta} exactly as written where they appear. Output only the message.\n\n${fallback}`});
+    const t = r.text.trim();
+    return ['{name}','{items}'].concat(fallback.includes('{eta}')?['{eta}']:[]).every(p=>t.includes(p)) ? t : fallback;
+  } catch(e){ return fallback; }
+}
+const fill = (t,s,eta) => t.replace('{name}',s.customer).replace('{items}',`${s.pk} item${s.pk>1?'s':''}`).replace('{eta}',eta==null?'':fmtClock(eta));
+async function notifyBatch(kind, list, ctx){
+  if (!list.length) return;
+  const tpl = await msgTemplate(kind, ctx), sid = await sessionId();
+  for (const {s, v, eta} of list){
+    const n = {vehicle:v.name, customer:s.customer, stop_id:s.id, kind, message:fill(tpl,s,eta), eta:eta==null?null:fmtClock(eta)};
+    S.notifs++;
+    if (API.online) API.j('POST','/api/notifications',{...n, session_id:sid}).catch(()=>{});
+  }
+  render();
+}
+
+// ---- planning (no state changes until a plan is approved) ----
+// Nearest vehicle that can take one more stop and still return above floor + reserve before the cutoff.
+function donorFor(src, extra, s){
+  const c = S.cars.filter(d=>d!==src && ['En route','Delayed','Loading'].includes(d.status)).map(d=>{
+    const n = (extra.get(d)||0)+1, pd = pending(d);
+    const p = project(d, [...pd, ...Array.from({length:n},()=>({win:Infinity}))], 0, 0);
+    return {d, p, km:kmBetween(pd.length?pd[pd.length-1].ll:d.lastLL, s.ll)};
+  }).filter(x=>x.p.batt >= FLOOR+RESERVE && x.p.finish <= CUTOFF).sort((a,b)=>a.km-b.km);
+  return c.length ? c[0] : null;
+}
+function addMove(moves, extra, s, pick){
+  const d = pick.d, k = extra.get(d)||0;
+  moves.push({s, d, km:pick.km, eta:etaOf(d, pending(d).length+k)}); extra.set(d, k+1);
+}
+// Take stops off the end of the route until this vehicle can finish above the battery floor and before
+// the cutoff: hand each to the nearest vehicle with spare capacity, or offer a reschedule if none can take it.
+function planTail(v){
+  const pend = pending(v), extra = new Map(), moves = [], resched = []; let k = 0;
+  while (k < pend.length){
+    const p = project(v, pend.slice(0, pend.length-k), 0, 0);
+    if (p.batt>=FLOOR && p.finish<=CUTOFF) break;
+    const s = pend[pend.length-1-k], pick = donorFor(v, extra, s);
+    if (pick) addMove(moves, extra, s, pick); else resched.push(s);
+    k++;
+  }
+  return {moves, resched, before:project(v,pend,0,0), after:project(v,pend.slice(0,pend.length-k),0,0)};
+}
+function planAll(v){
+  const extra = new Map(), moves = [], resched = [];
+  for (const s of pending(v)){ const pick = donorFor(v, extra, s); if (pick) addMove(moves, extra, s, pick); else resched.push(s); }
+  return {moves, resched};
+}
+function movesTable(pl){
+  if (!pl.moves.length && !pl.resched.length) return '';
+  return `<table><thead><tr><th>Stop</th><th>Customer</th><th>Items</th><th>Plan</th><th>New ETA</th></tr></thead><tbody>${
+    pl.moves.map(m=>`<tr><td>${m.s.id}</td><td>${m.s.customer}</td><td>${m.s.pk}</td><td><span class="vdot" style="background:${m.d.color}"></span>→ ${m.d.name} (${m.km.toFixed(1)} km from its route)</td><td>${fmtClock(m.eta)}</td></tr>`).join('')}${
+    pl.resched.map(s=>`<tr><td>${s.id}</td><td>${s.customer}</td><td>${s.pk}</td><td style="color:var(--limit)">Offer reschedule (no vehicle has battery and time)</td><td>—</td></tr>`).join('')}</tbody></table>`;
+}
+function applyMoves(src, moves){
+  const done = moves.map(m=>{
+    m.s.status = 'moved';
+    const eta = etaOf(m.d, pending(m.d).length);
+    const ns = {...m.s, status:'pending', from:src.name, planned:eta, win:eta+WIN};
+    m.d.stops.push(ns);
+    return {s:ns, v:m.d, eta};
+  });
+  const by = {}; done.forEach(x=>(by[x.v.name] ||= []).push(x));
+  Object.entries(by).forEach(([name,list])=>notifyBatch('reassigned', list, {donor:name}));
+  return by;
+}
+function rescheduleAll(v, stops, reason){
+  stops.forEach(s=>s.status='resched');
+  notifyBatch('reschedule', stops.map(s=>({s, v, eta:null})), {reason});
+}
+
+// ---- dispatcher approval ----
+function propose(p){
+  if (!$('needApproval').checked){
+    const pl = p.build();
+    if (p.empty(pl)){ agent(p.emptyMsg, 'decision', 'bad'); return; }
+    agent(`Auto-approved (approval switched off): ${p.title(pl)}`, 'approval');
+    p.approve(pl); render(); return;
+  }
+  S.pending.push(p);
+  if (timer){ stop(); S.resume = true; }
+  if (S.pending.length===1) showNext();
+}
+function showNext(){
+  const p = S.pending[0];
+  if (!p){ $('approval').style.display='none'; $('start').disabled=false; if (S.resume){ S.resume=false; start(); } render(); return; }
+  p.plan = p.build();
+  if (p.empty(p.plan)){ agent(p.emptyMsg, 'decision', 'bad'); S.pending.shift(); return showNext(); }
+  $('start').disabled = true; $('start').textContent = '⏸ Waiting for you';
+  $('approval').style.display = '';
+  $('apTitle').textContent = p.title(p.plan); $('apBody').innerHTML = p.body(p.plan);
+  $('apYes').textContent = p.approveLabel; $('apNo').textContent = p.rejectLabel;
+  agent(`<b>Asked the dispatcher:</b> ${p.title(p.plan)}`, 'approval', 'warn');
+  $('approval').scrollIntoView({behavior:'smooth', block:'center'});
+  render();
+}
+function decide(ok){
+  const p = S.pending.shift(); if (!p) return;
+  S.approvals.push({t:fmtClock(S.t), request:p.title(p.plan), decision:ok?'approved':'rejected'});
+  agent(`Dispatcher <b>${ok?'approved':'rejected'}</b>: ${p.title(p.plan)}${ok?'':' → '+p.rejectLabel.toLowerCase()}`, 'approval', ok?'':'bad');
+  ok ? p.approve(p.plan) : p.reject(p.plan);
+  $('start').textContent = '▶ Resume';
+  render(); showNext();
+}
+function proposeTail(v, reason, rejectLabel){
+  propose({
+    build:() => planTail(v),
+    empty:pl => !pl.moves.length && !pl.resched.length,
+    emptyMsg:`${v.name} has no stops that can be taken off its route.`,
+    title:pl => [pl.moves.length ? `Reassign ${pl.moves.length} stop${pl.moves.length>1?'s':''} from ${v.name} to ${[...new Set(pl.moves.map(m=>m.d.name))].join(', ')}` : '',
+                 pl.resched.length ? `${pl.moves.length?'and r':'R'}eschedule ${pl.resched.length} of ${v.name}'s stop${pl.resched.length>1?'s':''}` : ''].filter(Boolean).join(' '),
+    body:pl => `<p class="note">${reason}. As planned, ${v.name} would return with <b>${pl.before.batt.toFixed(0)}%</b> (floor ${FLOOR}%) at ${fmtClock(pl.before.finish)}. After this change: <b>${pl.after.batt.toFixed(0)}%</b> at ${fmtClock(pl.after.finish)}.${pl.resched.length?' No other vehicle has enough battery and time for some stops, so those customers would be offered a reschedule.':''}</p>${movesTable(pl)}`,
+    approveLabel:'Approve plan', rejectLabel,
+    approve:pl => { const by = applyMoves(v, pl.moves);
+      if (pl.resched.length) rescheduleAll(v, pl.resched, 'limited vehicle capacity');
+      agent(`${v.name}: ${pl.moves.length?`reassigned ${pl.moves.length} stop${pl.moves.length>1?'s':''} (${Object.entries(by).map(([n,l])=>`${n} ${l.length}`).join(', ')})`:''}${pl.moves.length&&pl.resched.length?', ':''}${pl.resched.length?`${pl.resched.length} customers offered a reschedule`:''}. Now returns with about ${pl.after.batt.toFixed(0)}%.`); },
+    reject:() => { const p = project(v, pending(v), 0, 0);
+      agent(`${v.name} keeps all stops; projected battery at return ${p.batt.toFixed(0)}%. Watch it closely.`, 'decision', 'bad'); },
+  });
+}
+
+// ---- events ----
+async function trigger(kind, idx, label){
+  const v = S.cars[idx];
+  if (!['En route','Delayed'].includes(v.status)){ agent(`${v.name} is ${v.status.toLowerCase()}, so the ${kind} event does not affect a delivery run.`, 'info'); return; }
+  if (kind==='breakdown') return breakdown(v);
+  const ev = {...EVENTS[kind], label:label || EVENTS[kind].label}, pend = pending(v);
+  // Low-risk choice, made automatically: wait it out or take the alternate path.
+  const opts = [{name:'Wait it out', delay:ev.wait, drain:0}, {name:'Reroute', delay:ev.reroute, drain:ev.drain}]
+    .map(o=>({...o, ...project(v,pend,o.delay,o.drain)}));
+  opts.forEach(o=>o.ok = o.batt>=FLOOR && o.finish<=CUTOFF);
+  const best = [...opts].sort((a,b)=>(b.ok-a.ok)||(a.late-b.late)||(a.delay-b.delay))[0];
+  v.delay += best.delay; v.soc -= best.drain; v.rerouted = best.name==='Reroute';
+  v.note = `${best.name==='Reroute'?'Rerouted':'Delayed'} (${kind})`;
+  const why = opts.map(o=>`${o.name}: +${o.delay} min, ${o.late} stop${o.late===1?'':'s'} outside window, battery ends ${o.batt.toFixed(0)}%${o.ok?'':' <b>(below '+FLOOR+'% floor)</b>'}`).join('<br>');
+  agent(`<b>${v.name}</b> hit ${esc(ev.label)}.<br>${why}<br>→ <b>${best.name}</b>`, 'decision', best.late>0?'warn':'');
+  const late = pending(v).map((s,j)=>({s, v, eta:etaOf(v,j)})).filter(x=>x.eta - x.s.planned >= 10);
+  notifyBatch('delay', late, {mins:Math.round(late.length ? late[0].eta - late[0].s.planned : best.delay), reason:kind==='traffic'?'heavy traffic':'a road incident'});
+  // Higher-risk follow-up needs the dispatcher: moving stops to another vehicle.
+  const p = project(v, pending(v), 0, 0);
+  if (p.batt<FLOOR || p.finish>CUTOFF) proposeTail(v, `${v.name} cannot finish safely after the ${kind}`, `Keep stops on ${v.name}`);
+  render();
+}
+function preDeparture(v){
+  const p = project(v, pending(v), 0, 0);
+  if (p.batt>=FLOOR && p.finish<=CUTOFF) return;
+  agent(`<b>Pre-departure check:</b> ${v.name} left the Corporate Office at ${v.soc.toFixed(0)}% but its route needs ${v.need}%. Projected battery at return ${p.batt.toFixed(0)}% (floor ${FLOOR}%).`, 'decision', 'bad');
+  proposeTail(v, `${v.name} was under-charged overnight`, 'Depart with all stops');
+}
+function breakdown(v){
+  v.status = 'Out of service'; v.note = 'Breakdown'; v.rerouted = false;
+  const n = pending(v).length;
+  agent(`<b>${v.name}</b> broke down with ${n} stops left.`, 'decision', 'bad');
+  propose({
+    build:() => planAll(v),
+    empty:pl => !pl.moves.length && !pl.resched.length,
+    emptyMsg:`${v.name} had no stops left.`,
+    title:pl => pl.moves.length
+      ? `Cover ${v.name}'s ${pl.moves.length+pl.resched.length} stops: ${pl.moves.length} to other vehicles${pl.resched.length?`, ${pl.resched.length} rescheduled`:''}`
+      : `Reschedule all ${pl.resched.length} of ${v.name}'s stops (no vehicle has battery and time to take them)`,
+    body:pl => `<p class="note">${v.name} is out of service. The agent found the nearest vehicles with enough battery and time to finish by ${fmtClock(CUTOFF)}.</p>${movesTable(pl)}`,
+    approveLabel:'Approve plan', rejectLabel:'Reschedule all instead',
+    approve:pl => { applyMoves(v, pl.moves); if (pl.resched.length) rescheduleAll(v, pl.resched, 'a vehicle breakdown'); },
+    reject:() => rescheduleAll(v, pending(v), 'a vehicle breakdown'),
+  });
+  render();
+}
+
+// ---- live incidents (511 SF Bay via server) ----
+async function pollIncidents(){
+  if (!API.online){ $('incs').innerHTML = 'Server offline.'; return; }
+  try { INC = await API.j('GET','/api/incidents'); }
+  catch(e){ $('incs').innerHTML = '<span style="color:var(--limit)">511 request failed.</span> It will retry in 90 s.'; return; }
+  if (!INC.configured){
+    $('incs').innerHTML = 'Not connected. Get a free token at <a href="https://511.org/open-data/token" target="_blank" rel="noopener">511.org/open-data/token</a>, then restart the server with <code>SF511_API_KEY=… python3 server.py</code>. Until then, use the event buttons.';
+    render(); return;
+  }
+  const near = INC.events.map(e=>({...e, km:kmBetween([DEPOT.lat,DEPOT.lon],[e.lat,e.lon])})).filter(e=>e.km<25).sort((a,b)=>a.km-b.km);
+  INC.near = near;
+  $('incs').innerHTML = `${near.length} active incident${near.length===1?'':'s'} within 25 km of the Corporate Office (of ${INC.events.length} in the Bay Area).` +
+    near.slice(0,6).map(e=>`<div class="inc"><b>${esc(e.severity||e.type)}</b> · ${esc(e.headline)}<br><small>${e.km.toFixed(1)} km away · ${esc(e.roads)}</small></div>`).join('');
+  if ($('live').checked && S && timer) applyIncidents(near);
+  render();
+}
+// An incident within 1.5 km of one of a vehicle's next six stops delays that vehicle (once per incident).
+function applyIncidents(events){
+  S.seen ||= new Set();
+  for (const e of events){
+    if (S.seen.has(e.id)) continue;
+    const v = S.cars.find(c=>['En route','Delayed'].includes(c.status) && pending(c).slice(0,6).some(s=>kmBetween(s.ll,[e.lat,e.lon])<1.5));
+    if (!v) continue;
+    S.seen.add(e.id);
+    const text = `${e.headline} ${(e.subtypes||[]).join(' ')}`;
+    const kind = /accident|collision|crash|closure|closed|blocked/i.test(text) || /major|severe/i.test(e.severity) ? 'accident' : 'traffic';
+    trigger(kind, v.idx, `a live 511 incident: ${e.headline}`);
+  }
+}
+
+// ---- map ----
+function initMap(){
+  if (!window.L){ $('map').innerHTML = '<p class="note" style="padding:12px">The map library could not load (no internet access to cdnjs).</p>'; return; }
+  MAP = L.map('map').setView([DEPOT.lat, DEPOT.lon], 12);
+  const cartoKey = API.config.carto_key || '';
+  const tileUrl = cartoKey
+    ? `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${cartoKey}`
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  L.tileLayer(tileUrl, {attribution:'&copy; OpenStreetMap contributors &copy; CARTO', maxZoom:19}).addTo(MAP);
+  LAYER = L.layerGroup().addTo(MAP);
+}
+function pos(v){
+  const depot = [DEPOT.lat, DEPOT.lon];
+  if (v.status==='Loading' || v.status==='Back at Corporate Office') return depot;
+  if (v.status==='Returning'){ const f = 1-Math.max(0,v.returnLeft)/RET_MIN; return [v.lastLL[0]+(depot[0]-v.lastLL[0])*f, v.lastLL[1]+(depot[1]-v.lastLL[1])*f]; }
+  const nx = pending(v)[0]; if (!nx || v.status==='Out of service') return v.lastLL;
+  const f = Math.min(1, v.work/GAP); return [v.lastLL[0]+(nx.ll[0]-v.lastLL[0])*f, v.lastLL[1]+(nx.ll[1]-v.lastLL[1])*f];
+}
+function drawMap(){
+  if (!LAYER) return;
+  LAYER.clearLayers();
+  const depot = [DEPOT.lat, DEPOT.lon];
+  L.marker(depot, {icon:L.divIcon({className:'', html:'<div class="vlabel" style="border-color:var(--ink)">⚡ Corporate Office</div>', iconAnchor:[28,10]})}).addTo(LAYER);
+  for (const v of S.cars){
+    const route = v.stops.filter(s=>s.status!=='moved');
+    L.polyline([depot, ...route.map(s=>s.ll), depot], {color:v.color, weight:3, opacity:.65, dashArray:v.rerouted?'6 6':null}).addTo(LAYER);
+    for (const s of route){
+      const fillC = {delivered:'#12a150', late:'#e8890c', resched:'#d92d20'}[s.status] || '#ffffff';
+      L.circleMarker(s.ll, {radius:5, color:v.color, weight:2, fillColor:fillC, fillOpacity:1})
+        .bindTooltip(`${s.id} · ${s.customer} · ${s.pk} item(s)${s.from?' · from '+s.from:''} · ${s.status}`).addTo(LAYER);
+    }
+    L.marker(pos(v), {zIndexOffset:1000, icon:L.divIcon({className:'', html:`<div class="vlabel" style="border-color:${v.color}">${v.name}${v.status==='Delayed'?' ⏳':v.status==='Out of service'?' ✖':''}</div>`, iconAnchor:[24,10]})})
+      .bindTooltip(`${v.name}: ${v.status}, ${v.soc.toFixed(0)}%`).addTo(LAYER);
+  }
+  for (const e of (INC.near||[])){
+    L.circleMarker([e.lat,e.lon], {radius:7, color:'#d92d20', weight:2, fillColor:'#d92d20', fillOpacity:.5})
+      .bindPopup(`<b>${esc(e.severity||e.type)}</b><br>${esc(e.headline)}<br><small>${esc(e.roads)}</small>`).addTo(LAYER);
+  }
+}
+
+// ---- simulation ----
+function tick(){
+  if (S.pending.length) return;
+  const dt = +$('speed').value;
+  S.demo.filter(e=>S.t>=e.at).forEach(e=>{ S.demo.splice(S.demo.indexOf(e),1); trigger(e.kind, e.idx); });
+  S.cars.forEach(v=>{
+    if (v.status==='Loading'){
+      if (S.t<v.depart) return;
+      v.status = 'En route'; preDeparture(v);
+    }
+    if (v.status==='Returning'){ v.returnLeft -= dt; if (v.returnLeft<=0){ v.status='Back at Corporate Office'; v.soc=Math.max(0,v.soc-v.ret); v.lastLL=[DEPOT.lat,DEPOT.lon]; } return; }
+    if (v.status==='Back at Corporate Office' || v.status==='Out of service') return;
+    let left = dt;
+    if (v.delay>0){ const use = Math.min(v.delay,left); v.delay -= use; left -= use; }
+    v.status = v.delay>0 ? 'Delayed' : 'En route';
+    v.work += left;
+    while (v.work >= GAP){
+      const s = pending(v)[0]; if (!s){ v.work = 0; break; }
+      v.work -= GAP; s.at = S.t+dt; s.status = s.at > s.win ? 'late' : 'delivered'; v.soc -= v.drain; v.lastLL = s.ll;
+    }
+    if (!pending(v).length){ v.status='Returning'; v.returnLeft=RET_MIN; v.work=0; v.rerouted=false; }
+  });
+  S.t += dt;
+  render();
+  if (!S.pending.length && (S.cars.every(v=>['Back at Corporate Office','Out of service'].includes(v.status)) || S.t >= CUTOFF+180)){
+    stop(); S.done = true; agent('All vehicles are back at the Corporate Office or out of service. Day complete.', 'info'); render(); generateBrief();
+  }
+}
+
+// ---- rendering ----
+const STATUS_COL = {Loading:'var(--idle)','En route':'var(--ok)',Delayed:'var(--warn)',Returning:'var(--load)','Back at Corporate Office':'var(--load)','Out of service':'var(--limit)'};
+const dotsOf = v => v.stops.map(s=>`<i class="${{delivered:'delivered',late:'late',moved:'moved',resched:'resched'}[s.status]||''}" title="${s.id} · ${s.customer} · ${s.pk} item(s)${s.from?' · from '+s.from:''}"></i>`).join('');
+function statusLine(all){
+  const left = all.filter(s=>s.status==='pending').length, del = all.filter(s=>s.status==='delivered'||s.status==='late').length;
+  const short = S.cars.filter(v=>v.soc < v.need);
+  const start = DEPOT_RES ? `with the battery each van charged overnight (${DEPOT_RES.id!=null?'Corporate Office run #'+DEPOT_RES.id:'last Corporate Office run'})`
+                          : 'assuming each van was charged to its route requirement (run the Corporate Office page first to link them)';
+  if (S.pending.length) return `<b>Waiting for your approval:</b> ${esc(S.pending[0].plan ? S.pending[0].title(S.pending[0].plan) : '')}.`;
+  if (S.done) return `Day complete — <b>${del} stops delivered</b>, ${all.filter(s=>s.status==='late').length} late, ${all.filter(s=>s.status==='moved').length} handed to another van, ${all.filter(s=>s.status==='resched').length} rescheduled. ${S.notifs} customers were kept informed.`;
+  if (S.t===START && !timer) return `${S.cars.length} vans leave the Corporate Office from <b>${fmtClock(START)}</b> ${start}.${short.length?` <b>${short.length} under-charged</b> — the agent will check them before they leave.`:''} Press <b>Start the day</b>, or <b>Run demo scenario</b> to see an accident, traffic and a breakdown.`;
+  const onRoad = S.cars.filter(v=>['En route','Delayed'].includes(v.status)).length, delayed = S.cars.filter(v=>v.status==='Delayed').length;
+  const lastDec = S.alog.find(a=>a.cls!=='' || /hit|broke|Pre-departure|Reassigned|reassigned/.test(a.text));
+  return `<b>${onRoad} van${onRoad===1?'':'s'} on the road</b>, ${left} stops left${delayed?`, ${delayed} delayed`:''}.` +
+    (lastDec ? ` Latest: ${lastDec.text.split('<br>')[0].replace(/<[^>]+>/g,'')} (${fmtClock(lastDec.t)})` : '');
+}
+function render(){
+  if (!S) return;
+  const all = S.cars.flatMap(v=>v.stops), total = all.filter(s=>s.status!=='moved').length;
+  $('status').innerHTML = statusLine(all);
+  $('kClock').textContent = fmtClock(S.t);
+  $('kClockL').textContent = S.done ? 'Day complete' : 'Simulated time';
+  $('kDel').textContent = `${all.filter(s=>s.status==='delivered'||s.status==='late').length}/${total}`;
+  $('kLate').textContent = all.filter(s=>s.status==='late').length;
+  $('kNotif').textContent = S.notifs;
+  const appr = S.approvals.filter(a=>a.decision==='approved').length;
+  $('chips').innerHTML = [
+    `<span class="chip">🔋 ${DEPOT_RES ? 'Batteries from last Corporate Office night' : 'Batteries assumed at plan'}</span>`,
+    `<span class="chip">${$('needApproval').checked ? '🙋 Asks you before reassigning' : '🤖 Reassigns automatically'}</span>`,
+    `<span class="chip ${INC.configured?'':'off'}">🚦 ${INC.configured ? `Live 511 traffic: ${(INC.near||[]).length} nearby incidents` : 'Live traffic not connected'}</span>`,
+    S.approvals.length ? `<span class="chip">✅ ${appr} approved · ❌ ${S.approvals.length-appr} rejected</span>` : ''].join('');
+  $('vehs').innerHTML = S.cars.map(v=>{
+    const pend = pending(v), nx = pend[0], late = nx ? Math.round(etaOf(v,0) - nx.planned) : null;
+    const eta = v.status==='Loading' ? `leaves ${fmtClock(v.depart)}` : v.status==='Out of service' ? 'out of service' : late==null ? 'route done' : late>=5 ? `<b style="color:var(--warn)">+${late} min</b> vs plan` : 'on time';
+    return `<div class="veh"><div><span class="vdot" style="background:${v.color}"></span><b>${v.name}</b><br><small>${v.note||'&nbsp;'}</small></div>
+      <div><div class="bbar"><i style="width:${Math.max(0,v.soc)}%;${v.soc<FLOOR+RESERVE?'background:var(--limit)':''}"></i><u style="left:${FLOOR}%"></u></div>
+        <small>${v.soc.toFixed(0)}% · ${pend.length} stops, ${pend.reduce((a,s)=>a+s.pk,0)} packages left · ${eta}</small><div class="dots" style="margin-top:4px">${dotsOf(v)}</div></div>
+      <span class="badge" style="background:${STATUS_COL[v.status]}">${v.status}</span></div>`;
+  }).join('');
+  if (TAB==='fleet') $('rows').innerHTML = S.cars.map(v=>{
+    const pend = pending(v), nx = pend[0], late = nx ? Math.round(etaOf(v,0) - nx.planned) : null;
+    const eta = v.status==='Out of service' ? '—' : (late==null ? '—' : late>=5 ? `<b style="color:var(--warn)">+${late} min</b>` : 'On time');
+    return `<tr><td><span class="vdot" style="background:${v.color}"></span><b>${v.name}</b></td>
+      <td><span class="badge" style="background:${STATUS_COL[v.status]}">${v.status}</span>${v.note?`<br><small class="note">${v.note}</small>`:''}</td>
+      <td>${v.soc.toFixed(0)}% <small class="note">(started ${v.soc0.toFixed(0)}%, route needs ${v.need}%)</small></td>
+      <td>${pend.length}</td><td>${pend.reduce((a,s)=>a+s.pk,0)}</td><td>${eta}</td><td><div class="dots">${dotsOf(v)}</div></td></tr>`;
+  }).join('');
+  $('linkTxt').textContent = DEPOT_RES ? `Starting battery from ${DEPOT_RES.id!=null?'Corporate Office session #'+DEPOT_RES.id:'the last Corporate Office run in this browser'} (${new Date(DEPOT_RES.saved*1000).toLocaleString()}). When the day ends, each van's remaining battery feeds the next Corporate Office night.`
+    : 'No Corporate Office run yet — vans are assumed charged to exactly their route requirement.';
+  drawMap();
+}
+
+// ---- brief ----
+function buildPayload(){
+  return {
+    window:`${fmtClock(START)}-${fmtClock(S.t)}`, customers_notified:S.notifs,
+    start_of_day:DEPOT_RES ? (DEPOT_RES.id!=null ? `depot session #${DEPOT_RES.id}` : 'depot run (browser)') : 'plan (no depot run)',
+    vehicles:S.cars.map(v=>({name:v.name, status:v.status, battery_start:+v.soc0.toFixed(0), battery_needed:v.need, battery_now:+v.soc.toFixed(0),
+      delivered:v.stops.filter(s=>s.status==='delivered').length, late:v.stops.filter(s=>s.status==='late').length,
+      handed_off:v.stops.filter(s=>s.status==='moved').length, needs_reschedule:v.stops.filter(s=>s.status==='resched').length,
+      pending:pending(v).length})),
+    approvals:S.approvals,
+    agent_decisions:S.alog.slice().reverse().map(a=>fmtClock(a.t)+' '+a.text.replace(/<br>/g,'; ').replace(/<[^>]+>/g,'')),
+  };
+}
+function localBrief(p){
+  const sum = k => p.vehicles.reduce((a,v)=>a+v[k],0);
+  let t = `Dispatch brief (${p.window}) — started from ${p.start_of_day}\n\n`;
+  t += `${sum('delivered')+sum('late')} stops delivered, ${sum('late')} of them late. ${sum('handed_off')} stops were reassigned between vehicles and ${sum('needs_reschedule')} need a reschedule. ${p.customers_notified} customers were notified automatically.\n\n`;
+  const ap = p.approvals.filter(a=>a.decision==='approved').length;
+  if (p.approvals.length) t += `The dispatcher reviewed ${p.approvals.length} agent proposal${p.approvals.length>1?'s':''} (${ap} approved, ${p.approvals.length-ap} rejected).\n`;
+  const out = p.vehicles.filter(v=>v.status==='Out of service');
+  if (out.length) t += `Out of service: ${out.map(v=>v.name).join(', ')}.\n`;
+  const low = p.vehicles.filter(v=>v.battery_now<20);
+  if (low.length) t += `Lowest batteries to prioritise tonight: ${low.map(v=>`${v.name} (${v.battery_now}%)`).join(', ')}.\n`;
+  return t + '\n[Simulated output — start server.py with watsonx credentials for real Granite generation]';
+}
+async function generateBrief(){
+  const p = buildPayload(); $('brief').textContent = 'Generating…';
+  let text = localBrief(p), source = 'template';
+  if (API.config.granite){
+    try {
+      const r = await API.j('POST','/api/granite',{prompt:'You are a dispatch operations assistant for an EV delivery fleet. Write a short end-of-day brief (under 150 words) from this JSON: deliveries, delays, reassignments, dispatcher approvals, customers notified, and anything needing attention tonight.\n\n'+JSON.stringify(p)});
+      text = r.text; source = 'watsonx-granite';
+    } catch(e){}
+  }
+  $('brief').textContent = text;
+  // The depot starts its afternoon from the battery each vehicle came back with.
+  try { localStorage.setItem('dispatchResult', JSON.stringify({id:null, saved:Date.now()/1000, vehicles:p.vehicles})); } catch(e){}
+  const id = await sessionId();
+  if (id!=null){ API.j('POST',`/api/sessions/${id}/brief`,{text,payload:p,source}).catch(()=>{}); API.j('POST',`/api/sessions/${id}/end`,p).catch(()=>{}); }
+}
+
+function stop(){ clearInterval(timer); timer=null; if (S && !S.pending.length && S.t>START) $('start').textContent='▶ Resume'; }
+async function start(){ if (S.done) await init(); if (S.pending.length) return; $('start').textContent='❚❚ Pause'; sessionId(); timer = setInterval(tick,300); render(); }
+$('start').onclick = () => timer ? stop() : start();
+$('reset').onclick = () => init();
+$('demo').onclick = async () => { await init(); S.demo = DEMO.map(e=>({...e})); start(); };
+$('traffic').onclick = () => trigger('traffic', +$('veh').value);
+$('accident').onclick = () => trigger('accident', +$('veh').value);
+$('breakdown').onclick = () => trigger('breakdown', +$('veh').value);
+$('needApproval').onchange = render;
+$('apYes').onclick = () => decide(true);
+$('apNo').onclick = () => decide(false);
+$('gen').onclick = generateBrief;
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick = () => {
+  TAB = b.dataset.tab;
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active', x===b));
+  document.querySelectorAll('.panel').forEach(p=>p.hidden = p.id !== 'tab-'+TAB);
+  render();
+});
+initNav('dispatch').then(async () => { initMap(); await init(); pollIncidents(); setInterval(pollIncidents, 90000); });
+</script>
+</body>
+</html>

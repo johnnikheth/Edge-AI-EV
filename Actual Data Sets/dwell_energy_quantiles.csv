@@ -1,0 +1,5 @@
+group,metric,sessions,p5,p10,p25,p50,p75,p90,p95
+all_sessions,dwell_h,186482,0.32,0.59,1.18,2.1,3.08,4.25,5.76
+all_sessions,energy_kwh,186482,1.03,1.92,4.04,7.03,11.67,16.52,20.03
+evening_arrival_long_dwell,dwell_h,2429,6.27,6.73,10.25,12.07,13.65,15.33,16.39
+evening_arrival_long_dwell,energy_kwh,2429,6.51,8.79,12.02,17.65,31.57,49.72,57.87

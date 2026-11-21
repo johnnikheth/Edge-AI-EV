@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture and Scope</title>
+<link rel="stylesheet" href="common.css">
+<style>
+.card{margin-bottom:0}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-top:18px}
+ul{margin:6px 0 0;padding-left:20px} li{margin-bottom:6px;line-height:1.5}
+#arch text{font-family:system-ui}
+</style>
+</head>
+<body>
+<div class="wrap wide">
+
+  <section class="herobox">
+    <div class="bg" id="heroBg"></div>
+    <div class="shade"></div>
+    <div class="content">
+      <div>
+        <h1>How the Corporate Office EV solution works</h1>
+        <div id="status">Eleven agents share one goal — <b>the lowest energy bill with every van and semi ready for its route</b>. They report to three command agents — Energy, Fleet and Business — whose conclusions combine into one Corporate Office verdict. Anything that moves stops or reschedules customers waits for a person. watsonx.ai Granite writes the briefs and customer messages.</div>
+        <div class="actions">
+          <a href="index.html"><button class="primary big">⚡ Corporate Office</button></a>
+          <a href="dispatch.html"><button>🚐 Dispatch</button></a>
+          <a href="customers.html"><button>📨 Customers</button></a>
+          <a href="history.html"><button>🗂 History</button></a>
+          <a href="docs/Depot-EV-Solution.pdf" download><button>📄 Download solution PDF</button></a>
+        </div>
+      </div>
+      <div class="glass">
+        <div class="kpi"><b>11</b><span>Agents, led by 3 command agents (Energy, Fleet, Business)</span></div>
+        <div class="kpi"><b>3</b><span>AI agent types — Goal-Based, Utility-Based, Learning</span></div>
+        <div class="kpi good"><b>7</b><span>Fleet vehicles — 5 vans + 2 Tesla Semis</span></div>
+        <div class="kpi"><b>0</b><span>Peak-price kWh bought on a typical night</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="card">
+    <h2>System at a glance</h2>
+    <div class="scrollx"><svg id="arch" viewBox="0 0 1040 480" width="100%" role="img" aria-label="A Corporate Office verdict is drawn from three command agents. Energy Command supervises the power, solar and storage, tariff, outage resilience and demand-response agents; Fleet Command supervises the fleet planner, dispatch, battery health and charger fault agents; Business Command supervises customer communications and reporting. They connect to the grid, solar, storage, Corporate Office, chargers, public data, customers and watsonx.">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+      <g stroke="var(--muted)" stroke-width="1.6" fill="none" marker-end="url(#ar)"><path d="M270 82L270 58"/><path d="M645 82L645 58"/><path d="M898 82L898 58"/><path d="M77.5 338L77.5 292"/><path d="M203.5 338L203.5 292"/><path d="M329.5 338L329.5 292" marker-start="url(#ar)"/><path d="M455.5 338L455.5 292" marker-start="url(#ar)"/><path d="M581.5 338L581.5 292" marker-start="url(#ar)"/><path d="M707.5 338L707.5 292"/><path d="M833.5 338L833.5 292" marker-start="url(#ar)"/><path d="M959.5 338L959.5 292"/></g>
+      <g text-anchor="middle" fill="var(--ink)"><g><rect x="20" y="12" width="1000" height="44" rx="12" fill="var(--ink)"/><text x="520" y="30" font-weight="700" font-size="15" fill="var(--card)">🏁 Corporate Office verdict — GO · WATCH · ACTION NEEDED</text><text x="520" y="47" font-size="11" fill="var(--card)" opacity=".85">the worst of the three command conclusions · written into the morning brief</text></g><g><rect x="20" y="92" width="493" height="200" rx="14" fill="none" stroke="var(--load)" stroke-width="2.2" stroke-dasharray="7 4"/><rect x="32" y="82" width="469" height="34" rx="8" fill="var(--load)"/><text x="266.5" y="104" font-weight="700" font-size="13.5" fill="#fff">⚡ Energy Command</text><text x="266.5" y="136" font-size="9.5" fill="var(--muted)">supervisor agent · one conclusion for tonight's energy</text></g><g><rect x="34" y="150" width="148" height="52" rx="9" fill="var(--card)" stroke="var(--load)" stroke-width="1.6"/><text x="108.0" y="172" font-weight="700" font-size="11.5" fill="var(--ink)">Power agent</text><text x="108.0" y="190" font-size="9.5" fill="var(--muted)">cheapest hours · HVAC</text></g><g><rect x="192" y="150" width="148" height="52" rx="9" fill="var(--card)" stroke="var(--load)" stroke-width="1.6"/><text x="266.0" y="172" font-weight="700" font-size="11.5" fill="var(--ink)">Solar &amp; Storage agent</text><text x="266.0" y="190" font-size="9.5" fill="var(--muted)">solar → vans → storage</text></g><g><rect x="350" y="150" width="148" height="52" rx="9" fill="var(--card)" stroke="var(--load)" stroke-width="1.6"/><text x="424.0" y="172" font-weight="700" font-size="11.5" fill="var(--ink)">Tariff agent</text><text x="424.0" y="190" font-size="9.5" fill="var(--muted)">BEV size · rates</text></g><g><rect x="34" y="216" width="148" height="52" rx="9" fill="var(--card)" stroke="var(--load)" stroke-width="1.6"/><text x="108.0" y="238" font-weight="700" font-size="11.5" fill="var(--ink)">Outage resilience</text><text x="108.0" y="256" font-size="9.5" fill="var(--muted)">runtime · shed order</text></g><g><rect x="192" y="216" width="148" height="52" rx="9" fill="var(--card)" stroke="var(--load)" stroke-width="1.6"/><text x="266.0" y="238" font-weight="700" font-size="11.5" fill="var(--ink)">Demand response</text><text x="266.0" y="256" font-size="9.5" fill="var(--muted)">flex kW at peak</text></g><g><rect x="525" y="92" width="240" height="200" rx="14" fill="none" stroke="var(--limit, #d92d20)" stroke-width="2.2" stroke-dasharray="7 4"/><rect x="537" y="82" width="216" height="34" rx="8" fill="var(--limit, #d92d20)"/><text x="645.0" y="104" font-weight="700" font-size="13.5" fill="#fff">🚐 Fleet Command</text><text x="645.0" y="136" font-size="9.5" fill="var(--muted)">supervisor agent · are the vans ready?</text></g><g><rect x="537" y="150" width="106" height="52" rx="9" fill="var(--card)" stroke="var(--limit, #d92d20)" stroke-width="1.6"/><text x="590.0" y="172" font-weight="700" font-size="11.5" fill="var(--ink)">Fleet planner</text><text x="590.0" y="190" font-size="9.5" fill="var(--muted)">priority · swaps</text></g><g><rect x="647" y="150" width="106" height="52" rx="9" fill="var(--card)" stroke="var(--limit, #d92d20)" stroke-width="1.6"/><text x="700.0" y="172" font-weight="700" font-size="11.5" fill="var(--ink)">Dispatch</text><text x="700.0" y="190" font-size="9.5" fill="var(--muted)">reroute · notify</text></g><g><rect x="537" y="216" width="106" height="52" rx="9" fill="var(--card)" stroke="var(--limit, #d92d20)" stroke-width="1.6"/><text x="590.0" y="238" font-weight="700" font-size="11.5" fill="var(--ink)">Battery health</text><text x="590.0" y="256" font-size="9.5" fill="var(--muted)">history · cost / van</text></g><g><rect x="647" y="216" width="106" height="52" rx="9" fill="var(--card)" stroke="var(--limit, #d92d20)" stroke-width="1.6"/><text x="700.0" y="238" font-weight="700" font-size="11.5" fill="var(--ink)">Charger faults</text><text x="700.0" y="256" font-size="9.5" fill="var(--muted)">detect · ticket</text></g><g><rect x="777" y="92" width="243" height="200" rx="14" fill="none" stroke="var(--ok)" stroke-width="2.2" stroke-dasharray="7 4"/><rect x="789" y="82" width="219" height="34" rx="8" fill="var(--ok)"/><text x="898.5" y="104" font-weight="700" font-size="13.5" fill="#fff">📨 Business Command</text><text x="898.5" y="136" font-size="9.5" fill="var(--muted)">supervisor agent · customers &amp; reporting</text></g><g><rect x="789" y="150" width="106" height="52" rx="9" fill="var(--card)" stroke="var(--ok)" stroke-width="1.6"/><text x="842.0" y="172" font-weight="700" font-size="11.5" fill="var(--ink)">Customer comms</text><text x="842.0" y="190" font-size="9.5" fill="var(--muted)">drafts · replies</text></g><g><rect x="899" y="150" width="106" height="52" rx="9" fill="var(--card)" stroke="var(--ok)" stroke-width="1.6"/><text x="952.0" y="172" font-weight="700" font-size="11.5" fill="var(--ink)">Reporting</text><text x="952.0" y="190" font-size="9.5" fill="var(--muted)">owner report</text></g><g><rect x="20" y="338" width="115" height="50" rx="9" fill="var(--card)" stroke="var(--line)"/><text x="77.5" y="360" font-weight="700" font-size="11.5" fill="var(--ink)">⚡ Grid</text><text x="77.5" y="377" font-size="9.5" fill="var(--muted)">PG&amp;E BEV-1</text></g><g><rect x="146" y="338" width="115" height="50" rx="9" fill="var(--card)" stroke="var(--line)"/><text x="203.5" y="360" font-weight="700" font-size="11.5" fill="var(--ink)">☀ Rooftop solar</text><text x="203.5" y="377" font-size="9.5" fill="var(--muted)">Corporate Office</text></g><g><rect x="272" y="338" width="115" height="50" rx="9" fill="var(--card)" stroke="var(--line)"/><text x="329.5" y="360" font-weight="700" font-size="11.5" fill="var(--ink)">🔋 EV storage</text><text x="329.5" y="377" font-size="9.5" fill="var(--muted)">reserve for outages</text></g><g><rect x="398" y="338" width="115" height="50" rx="9" fill="var(--card)" stroke="var(--line)"/><text x="455.5" y="360" font-weight="700" font-size="11.5" fill="var(--ink)">🏢 Corp. Office</text><text x="455.5" y="377" font-size="9.5" fill="var(--muted)">HVAC · base load</text></g><g><rect x="524" y="338" width="115" height="50" rx="9" fill="var(--card)" stroke="var(--line)"/><text x="581.5" y="360" font-weight="700" font-size="11.5" fill="var(--ink)">🚐 Chargers &amp; vans</text><text x="581.5" y="377" font-size="9.5" fill="var(--muted)">ready by dawn</text></g><g><rect x="650" y="338" width="115" height="50" rx="9" fill="var(--card)" stroke="var(--line)"/><text x="707.5" y="360" font-weight="700" font-size="11.5" fill="var(--ink)">🌐 Public data</text><text x="707.5" y="377" font-size="9.5" fill="var(--muted)">OpenEI·511·NREL·Meteo</text></g><g><rect x="776" y="338" width="115" height="50" rx="9" fill="var(--card)" stroke="var(--line)"/><text x="833.5" y="360" font-weight="700" font-size="11.5" fill="var(--ink)">📨 Customers</text><text x="833.5" y="377" font-size="9.5" fill="var(--muted)">delay · moved</text></g><g><rect x="902" y="338" width="115" height="50" rx="9" fill="var(--card)" stroke="var(--line)"/><text x="959.5" y="360" font-weight="700" font-size="11.5" fill="var(--ink)">✍ watsonx</text><text x="959.5" y="377" font-size="9.5" fill="var(--muted)">Granite · Orchestrate</text></g>
+        <g><rect x="20" y="410" width="1000" height="40" rx="8" fill="var(--card)" stroke="var(--line)" stroke-dasharray="4 3"/><text x="520" y="434" font-size="12" fill="var(--muted)">server.py + SQLite — sessions · power samples · agent decisions · approvals · maintenance tickets · customer messages · briefs</text></g>
+      </g>
+    </svg></div>
+  </div>
+
+  <div class="card" style="border-top:4px solid #3b82d4">
+    <h2>AI Agent Types in this System</h2>
+    <p style="margin:0 0 14px;color:var(--muted)">Three distinct AI agent architectures work together across the eleven agents. Each type is implemented in code — not just labelled.</p>
+    <div class="three" style="margin-top:0">
+
+      <div class="card" style="margin:0;border-left:4px solid #3b82d4">
+        <h2 style="margin-top:0">🎯 Goal-Based Agents</h2>
+        <p class="note" style="margin:0 0 10px">Work toward a defined goal state by planning ahead. Actions are chosen because they advance the agent closer to the goal — not just because they look good right now.</p>
+        <ul>
+          <li><b>plan()</b> — <i>depot-engine.js</i><br>Goal: every van reaches its required charge level (need%) before departure. Builds a forward-looking slot schedule over the remaining night.</li>
+          <li><b>fleetPlanner()</b> — <i>depot-engine.js</i><br>Goal: every van that cannot reach its route charge is either given a lighter route or flagged. Searches for a safe route swap partner and proposes it.</li>
+          <li><b>chargeDecision()</b> — <i>depot-engine.js</i><br>Goal: the van reaches need% before dep. On each plug-in event, evaluates price, solar and slack to decide charge-now or wait — always tracking the goal.</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin:0;border-left:4px solid #7c5cd8">
+        <h2 style="margin-top:0">⚖️ Utility-Based Agents</h2>
+        <p class="note" style="margin:0 0 10px">Score every possible action with a utility function and pick the highest-scoring option. Unlike simple goal-based agents, they can trade off competing goods (cost vs. battery wear vs. grid headroom).</p>
+        <ul>
+          <li><b>utilityScore()</b> inside <b>plan()</b> — <i>depot-engine.js</i><br>Scores each 15-minute charging slot: 0 (solar, free) → 0.001 (stored energy) → grid price ($/kWh). The fill loop always picks the minimum-score slot first — a direct utility maximisation.</li>
+          <li><b>storageWear()</b> — <i>depot-engine.js</i><br>Computes gridMargin = peak price − grid cost − wear cost per kWh. If margin ≤ 0, the grid top-up is disabled. The agent picks the action with the higher net utility.</li>
+          <li><b>supervisors()</b> — <i>index.html</i><br>Aggregates Energy, Fleet and Business statuses into a worst-case depot verdict (GO / WATCH / ACTION NEEDED) by taking the maximum severity across all three domains.</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin:0;border-left:4px solid #16a34a">
+        <h2 style="margin-top:0">🧠 Learning Agents</h2>
+        <p class="note" style="margin:0 0 10px">Improve behaviour over time by observing outcomes across multiple sessions. The loop is: <b>observe</b> past results → <b>learn</b> a correction → <b>act</b> differently tonight.</p>
+        <ul>
+          <li><b>learningAdjust()</b> — <i>index.html</i><br>Reads per-van history (up to 10 nights) from SQLite via loadTrend(). Detects two patterns and derives a charge-target bump:<br>
+            — <i>Slow-charger compensation:</i> if a van averaged &lt;85% of requested power, the target is raised by up to +10% so the van still finishes in time.<br>
+            — <i>Deep-discharge guard:</i> if a van arrived below 16% SoC on the majority of recorded nights, +5% is added as a safety buffer.
+          </li>
+          <li><b>plan()</b> consumes <code>cfg.learningNeeds</code> — <i>depot-engine.js</i><br>Before scheduling each van, applies the bump from learningAdjust(), capped at 100%. The 🧠 icon appears in the Battery health card on the Agents tab when a target was raised.</li>
+          <li><b>healthText() / loadTrend()</b> — <i>index.html</i><br>The observation layer: loads multi-night vehicle records and surfaces trends (arrival SoC, cost per stop, slow-charge ratio) that feed the learning logic.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="three">
+    <div class="card" style="border:2px solid var(--warn)">
+      <h2>IBM SkillsBuild AI Experiential Learning Lab · US 2026 Fall</h2>
+      <ul>
+        <li><b>IBM Bob builds it:</b> six tracked Bob tasks (Python repo, tests, Orchestrate agent, security, IBM Cloud deploy, docs), each exported to <code>bob_sessions/</code>; 150 SkillsBuild credits tracked in <code>docs/bob-tasks/credit-log.md</code>.</li>
+        <li><b>watsonx runs in it:</b> Granite writes briefs and customer messages; a <b>watsonx Orchestrate</b> operations agent (<code>agents/depot_ops_agent.yaml</code>) answers "Are all vans ready?" and "How much did we save?" from saved data — read-only.</li>
+        <li><b>People decide:</b> risky dispatch changes always wait for approval.</li>
+        <li><b>Team of 3:</b> Engine lead, AI &amp; Platform lead, Product &amp; Delivery lead — roadmap to the Nov 22 deadline in <code>docs/TEAM_PLAN.md</code>.</li>
+        <li><b>Tools:</b> Claude and Antigravity (permitted by the lab) for prototyping; IBM Bob for the tracked build steps.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>How it works</h2>
+      <ul>
+        <li><b>Corporate Office (13:00–06:00, or a full day from 06:00):</b> vans return with the battery left from their route. The power agent plans each van's charge into the cheapest hours — rooftop solar, then super off-peak, then off-peak — and avoids the 4–9 pm peak unless a van would miss its departure. It spreads load to stay under the site limit and keep the BEV subscription small.</li>
+        <li><b>Rooftop solar and EV storage</b> (only if the site has them — the setup asks): solar charges vans and fills storage; once storage is full, the surplus goes to the Corporate Office. Storage powers the vans' required charging through the peak, then the Corporate Office, and keeps a reserve for outages. During an outage, solar and storage run the Corporate Office at any hour.</li>
+        <li><b>Solar &amp; Storage agent:</b> owns solar routing — vans first, then EV storage, then the Corporate Office — and decides when to hold storage for the peak or an outage. When the grid returns it refills storage from solar plus the grid.</li>
+        <li><b>Command agents (the centralized layer):</b> <b>Energy Command</b> (power, solar &amp; storage, tariff, outage resilience, demand response), <b>Fleet Command</b> (fleet planner, dispatch, battery health, charger faults) and <b>Business Command</b> (customer communications, reporting). Each reads its agents and reaches one conclusion — GO, WATCH or ACTION NEEDED. The worst of the three is the Corporate Office verdict shown on the Agents tab and in the morning brief.</li>
+        <li><b>Specialist agents:</b> <b>Outage resilience</b> estimates runtime on storage + solar and ranks vans by urgency; <b>Demand response</b> estimates the flexibility the site could offer at peak and measures the grid power actually avoided (simulated, no program rates); <b>Battery health</b> tracks cost per van and per stop, power delivered vs requested, and trends across saved nights from SQLite; <b>Charger faults</b> opens a maintenance ticket (stored in SQLite), tracks downtime and tells the planner; <b>Customer communications</b> drafts heads-ups, escalates when a late van is within 2 hours of departure, and records replies the dispatcher logs; <b>Reporting</b> writes the daily and monthly owner report and queues it — nothing is emailed until a connector is set up.</li>
+        <li><b>Fleet planner agent:</b> ranks vans by urgency and, if a van cannot reach its route charge, proposes swapping routes with a lighter-route van. It only proposes; the dispatcher approves.</li>
+        <li><b>Tariff agent:</b> checks the BEV subscription size and compares the Corporate Office meter rate with alternatives. It recommends; it never switches a rate.</li>
+        <li><b>HVAC:</b> when the Corporate Office thermostat triggers, the agent stops HVAC once it's comfortable and re-triggers it only 5% below the actual trigger temperature, freeing 30 kW for chargers.</li>
+        <li><b>Dispatch:</b> starts from each van's overnight charge. On traffic or an accident it chooses waiting or rerouting itself. Moving stops to another van or rescheduling customers waits for the dispatcher's approval.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Public data used</h2>
+      <table>
+        <thead><tr><th>Source</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://www.pge.com/tariffs/assets/pdf/tariffbook/ELEC_SCHEDS_BEV.pdf" target="_blank" rel="noopener">PG&amp;E Schedule BEV</a></td><td>EV charging prices by hour and subscription (effective Mar 1, 2026)</td></tr>
+          <tr><td><a href="https://openei.org/wiki/Utility_Rate_Database" target="_blank" rel="noopener">OpenEI Utility Rate Database</a></td><td>Corporate Office meter tariff</td></tr>
+          <tr><td><a href="https://developer.nrel.gov/docs/solar/pvwatts/v8/" target="_blank" rel="noopener">NREL PVWatts v8</a></td><td>Rooftop solar output by hour (clear-day fallback if blocked)</td></tr>
+          <tr><td><a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></td><td>Outdoor temperature (typical-day fallback if blocked)</td></tr>
+          <tr><td><a href="https://511.org/open-data/traffic" target="_blank" rel="noopener">511 SF Bay</a></td><td>Live traffic incidents (free token)</td></tr>
+          <tr><td>OpenStreetMap / CARTO</td><td>Route map tiles</td></tr>
+        </tbody>
+      </table>
+      <p class="note">All artwork on these pages is original, drawn in code — no third-party images.</p>
+    </div>
+    <div class="card" id="provenance"></div>
+    <div class="card">
+      <h2>MVP scope</h2>
+      <ul>
+        <li><b>In:</b> 5 simulated vans, site setup (rooftop solar / EV storage yes or no), cost-aware charging on PG&amp;E BEV-1 prices, storage at peak and in outages, HVAC power agent, solar/storage sizing explorer, dispatch agent with human approval, live 511 incidents, route map, SQLite history, Granite wording when credentials are set.</li>
+        <li><b>Simulated:</b> chargers, solar output, storage, Corporate Office temperature, vehicle positions and battery drain, stop locations, customer messages (stored, not sent).</li>
+        <li><b>Out:</b> real chargers and telematics, road-snapped routing, SMS or email delivery, seasonal tariff detail, billing. Outage islanding needs specific inverter and transfer-switch hardware at a real site.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<script src="common.js"></script>
+<script src="reference-data.js"></script>
+<script>
+initNav('arch');
+const nf = n => n.toLocaleString();
+document.getElementById('provenance').innerHTML = `<h2>Data behind the agents</h2>
+  <table><thead><tr><th>Dataset</th><th>Type</th><th>Rows used</th><th>Feeds</th></tr></thead><tbody>${REFDATA.sources.map(s =>
+    `<tr><td>${s.name}</td><td><b>${s.kind === 'real' ? 'Real' : 'Synthetic'}</b><br><small>${s.licence}</small></td><td>${nf(s.used)} of ${nf(s.rows)}</td><td>${s.agent}<br><small>${s.note}</small></td></tr>`).join('')}</tbody></table>
+  <p class="note"><b>Reviewed and not used:</b> three further public charging files were checked and rejected because their values are random or impossible — <code>ev_charging_patterns.csv</code> (state of charge above 100%, 73 °C, uniform start times), <code>Global_EV_Charging_Behavior_2024.csv</code> (all charger types about 21 kW, a third of sessions "Failed"), and <code>ev_charging_station_usage_grid_load.csv</code> (grid load unrelated to the hour). Nothing from them reaches an agent.</p>
+  <p class="note">Rebuilt ${REFDATA.built} by <code>Actual Data Sets/build_data.py</code> (<code>python3 -I "Actual Data Sets/build_data.py"</code>). Battery wear and the stress test are labelled simulated where they appear.</p>`;
+</script>
+</body>
+</html>

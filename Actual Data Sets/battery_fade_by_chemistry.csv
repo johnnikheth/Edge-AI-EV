@@ -1,0 +1,29 @@
+chemistry,factor,bin,readings,fade_pct_per_1000_cycles,multiplier_vs_chemistry,cycles_to_80pct_soh
+LFP,all,all,13309,6.282,1.0,3184
+LFP,fast_charge_ratio,high (>0.5),1546,6.704,1.067,2983
+LFP,fast_charge_ratio,low (<0.2),4361,6.106,0.972,3275
+LFP,fast_charge_ratio,mid (0.2-0.5),6483,6.295,1.002,3177
+LFP,depth_of_discharge,deep (>80%),2102,6.477,1.031,3088
+LFP,depth_of_discharge,medium (50-80%),8127,6.237,0.993,3206
+LFP,depth_of_discharge,shallow (<50%),2298,6.265,0.997,3192
+LMO,all,all,6555,16.856,1.0,1187
+LMO,fast_charge_ratio,high (>0.5),764,17.047,1.011,1173
+LMO,fast_charge_ratio,low (<0.2),2213,17.192,1.02,1163
+LMO,fast_charge_ratio,mid (0.2-0.5),3163,16.632,0.987,1203
+LMO,depth_of_discharge,deep (>80%),1171,18.337,1.088,1091
+LMO,depth_of_discharge,medium (50-80%),4188,16.979,1.007,1178
+LMO,depth_of_discharge,shallow (<50%),851,15.367,0.912,1301
+NCA,all,all,9301,12.937,1.0,1546
+NCA,fast_charge_ratio,high (>0.5),1241,13.867,1.072,1442
+NCA,fast_charge_ratio,low (<0.2),2682,12.326,0.953,1623
+NCA,fast_charge_ratio,mid (0.2-0.5),4780,13.096,1.012,1527
+NCA,depth_of_discharge,deep (>80%),1421,13.721,1.061,1458
+NCA,depth_of_discharge,medium (50-80%),5848,12.942,1.0,1545
+NCA,depth_of_discharge,shallow (<50%),1468,12.268,0.948,1630
+NMC,all,all,15256,11.86,1.0,1686
+NMC,fast_charge_ratio,high (>0.5),1867,12.86,1.084,1555
+NMC,fast_charge_ratio,low (<0.2),4632,11.248,0.948,1778
+NMC,fast_charge_ratio,mid (0.2-0.5),7660,12.068,1.018,1657
+NMC,depth_of_discharge,deep (>80%),2503,12.896,1.087,1551
+NMC,depth_of_discharge,medium (50-80%),9294,11.807,0.995,1694
+NMC,depth_of_discharge,shallow (<50%),2607,11.137,0.939,1796
