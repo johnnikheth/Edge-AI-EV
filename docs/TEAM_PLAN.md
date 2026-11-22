@@ -7,7 +7,7 @@ Lab dates: Sep 17 – Nov 22, 2026 (results Dec 10). Team of 3. Cohort theme: **
 |------|------|------|
 | Engine lead (technical) | Prakash Karey | Charging/storage/HVAC logic, Python repo (Bob 01), tests (Bob 02), security (Bob 04) |
 | AI & Platform lead (technical) | John Nikheth Chiluvuri | watsonx Granite connection, Orchestrate agent (Bob 03), IBM Cloud deploy (Bob 05), Bob credit log |
-| Product & Delivery lead | [Name] | Problem/business case, solution PDF, demo script and video, docs (Bob 06), coach/mentor contact, submission |
+| Product & Delivery lead | John Nikheth Chiluvuri | Problem/business case, solution PDF, demo script and video, docs (Bob 06), coach/mentor contact, submission |
 
 ## Roadmap
 | Week | Dates | Milestone | Owner(s) |
