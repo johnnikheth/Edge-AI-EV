@@ -250,7 +250,8 @@ def depot_prompt(p):
 
 
 # ---- sign-in + input validation constants ----------------------------------
-_DEPOT_TOKEN  = os.getenv("DEPOT_TOKEN", "")   # empty = open (localhost dev only)
+# _DEPOT_TOKEN is read lazily in _check_auth so that _load_dotenv() (called in main())
+# has a chance to populate os.environ before the first request is handled.
 _SESSION_KINDS = {"depot", "dispatch"}
 _NOTIF_KINDS   = {"delay", "reassigned", "reschedule"}
 _MAX_PROMPT    = 32_000   # cap Granite prompt length
@@ -259,12 +260,13 @@ _MAX_KW        = 10_000.0
 
 
 def _check_auth(headers, query):
-    if not _DEPOT_TOKEN:
+    tok = os.getenv("DEPOT_TOKEN", "")  # read after _load_dotenv() has run
+    if not tok:
         return True
     bearer = headers.get("Authorization", "")
-    if bearer.startswith("Bearer ") and bearer[7:] == _DEPOT_TOKEN:
+    if bearer.startswith("Bearer ") and bearer[7:] == tok:
         return True
-    if query.get("token", [""])[0] == _DEPOT_TOKEN:
+    if query.get("token", [""])[0] == tok:
         return True
     return False
 
@@ -297,7 +299,8 @@ class Handler(BaseHTTPRequestHandler):
     def route(self, method):
         u = urllib.parse.urlparse(self.path)
         q = urllib.parse.parse_qs(u.query)
-        if u.path.startswith("/api/") and not _check_auth(self.headers, q):
+        # /api/config is always public — it only returns boolean feature flags, no secrets.
+        if u.path.startswith("/api/") and u.path != "/api/config" and not _check_auth(self.headers, q):
             return self.reply(401, {"error": "unauthorized"})
         try:
             if u.path.startswith("/api/"):
@@ -487,7 +490,24 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(404, {"error": "unknown endpoint"})
 
 
+def _load_dotenv():
+    """Load .env file from the repo root into os.environ (no external packages needed)."""
+    env_path = ROOT / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        k = k.strip()
+        v = v.strip()
+        if k and k not in os.environ:   # don't override values already set in the environment
+            os.environ[k] = v
+
+
 def main():
+    _load_dotenv()
     with db() as c:
         c.executescript(SCHEMA)
         have = {r["name"] for r in c.execute("PRAGMA table_info(samples)")}

@@ -1,9 +1,20 @@
 // Shared helpers: API client, nav bar, clock formatting, and the fleet both simulations use.
+
+// Token: read from ?token= URL param (saves it to localStorage), then fall back to localStorage.
+(function(){
+  const p = new URLSearchParams(window.location.search).get('token');
+  if (p) { try { localStorage.setItem('depot_token', p); } catch(e){} }
+})();
+
 const API = {
   online: false,
   config: {},
+  _tok() { try { return localStorage.getItem('depot_token') || ''; } catch(e){ return ''; } },
   async j(method, url, body) {
-    const r = await fetch(url, {method, headers: {'Content-Type': 'application/json'}, body: body === undefined ? undefined : JSON.stringify(body)});
+    const tok = this._tok();
+    const sep = url.includes('?') ? '&' : '?';
+    const authUrl = tok ? url + sep + 'token=' + encodeURIComponent(tok) : url;
+    const r = await fetch(authUrl, {method, headers: {'Content-Type': 'application/json'}, body: body === undefined ? undefined : JSON.stringify(body)});
     if (!r.ok) throw new Error(r.status);
     return r.json();
   },
